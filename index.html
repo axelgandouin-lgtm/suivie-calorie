@@ -207,6 +207,7 @@
         <div class="actions">
             <button class="primary" onclick="sauvegarderJournee()">💾 Sauvegarder la journée</button>
             <button class="danger" onclick="nouvelleJournee()">🔄 Nouvelle journée</button>
+            <button onclick="ouvrirObjModal()">⚙️ Modifier objectifs</button>
         </div>
     </div>
 </div>
@@ -670,6 +671,45 @@
     // Render initial
     renderTable();
     renderPlats();
+    const LS_OBJ = "cm_objectifs_v1";
+
+// Charger les objectifs depuis localStorage
+function getObj(){
+  return JSON.parse(localStorage.getItem(LS_OBJ)) || {prot:160, carb:220, fat:60, cal:2200};
+}
+let objectifs = getObj();
+
+// Ouvrir la modal
+function ouvrirObjModal(){
+  const obj = getObj();
+  document.getElementById("obj-prot").value = obj.prot;
+  document.getElementById("obj-carb").value = obj.carb;
+  document.getElementById("obj-fat").value = obj.fat;
+  document.getElementById("obj-cal").value = obj.cal;
+  document.getElementById("objModal").style.display="block";
+}
+
+// Fermer la modal
+function fermerObjModal(){
+  document.getElementById("objModal").style.display="none";
+}
+
+// Sauvegarder les nouveaux objectifs
+function sauverObj(){
+  const prot = parseFloat(document.getElementById("obj-prot").value) || 0;
+  const carb = parseFloat(document.getElementById("obj-carb").value) || 0;
+  const fat  = parseFloat(document.getElementById("obj-fat").value)  || 0;
+  const cal  = parseFloat(document.getElementById("obj-cal").value)  || 0;
+
+  const newObj = {prot, carb, fat, cal};
+  localStorage.setItem(LS_OBJ, JSON.stringify(newObj));
+  objectifs = newObj;
+
+  fermerObjModal();
+  computeTotals(); // recalcul avec les nouveaux objectifs
+  alert("Objectifs mis à jour !");
+}
+
 </script>
 
 <!-- Modal graphique -->
@@ -679,6 +719,20 @@
         <canvas id="graphCanvas"></canvas>
     </div>
 </div>
+<div id="objModal" class="modal">
+  <div class="modal-content">
+    <span class="close" onclick="fermerObjModal()">&times;</span>
+    <h3>Modifier mes objectifs</h3>
+    <div class="row" style="flex-direction:column; gap:8px; margin-top:10px">
+      <label>Protéines (g) <input type="number" id="obj-prot"></label>
+      <label>Glucides (g) <input type="number" id="obj-carb"></label>
+      <label>Lipides (g) <input type="number" id="obj-fat"></label>
+      <label>Calories (kcal) <input type="number" id="obj-cal"></label>
+    </div>
+    <button class="primary" style="margin-top:12px" onclick="sauverObj()">✅ Sauvegarder</button>
+  </div>
+</div>
 
 </body>
 </html>
+
