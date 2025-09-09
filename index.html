@@ -22,6 +22,34 @@
         th,td{border-bottom:1px solid #1f2937; padding:10px; text-align:center; font-size:14px}
         thead th{position:sticky; top:0; background:#0b1220; z-index:1}
         tbody tr:hover{background:#0b1220}
+        /* Lignes du tableau (desktop) */
+tbody tr {
+    transition: all 0.3s ease; /* pour animation hover */
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15); /* ombre douce */
+    margin-bottom: 8px; /* espace entre lignes */
+    border-radius: 10px; /* coins arrondis */
+}
+
+/* Hover léger pour les lignes */
+tbody tr:hover {
+    background: #111827;
+    transform: translateY(-2px); /* léger mouvement */
+}
+
+/* Pour les cartes des plats (modal ou sections) */
+.card, .modal-content {
+    transition: all 0.3s ease;
+}
+/* Animation fade-in */
+.fade-in {
+    animation: fadeIn 0.5s ease forwards;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-5px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
         .totals{display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-top:16px}
         .stat{background:#0b1220; border:1px solid #1f2937; border-radius:12px; padding:12px; text-align:center}
         .stat b{display:block; font-size:18px}
@@ -30,7 +58,17 @@
         .actions{display:flex; gap:10px; margin-top:20px; flex-wrap:wrap}
         .actions button{flex:1}
         .bar-container { background:#1f2937; border-radius:10px; height:20px; width:100%; margin:5px 0; }
-        .bar { height:100%; border-radius:10px; background:var(--accent); text-align:right; padding-right:5px; color:white; font-size:12px; }
+        .bar {
+    height:100%;
+    border-radius:10px;
+    background:var(--accent);
+    text-align:right;
+    padding-right:5px;
+    color:white;
+    font-size:12px;
+    transition: width 0.5s ease; /* <-- ajoute cette ligne */
+}
+
         .bar.over { background:#dc2626; }
         .bar.prot { background:#3b82f6; }   /* Bleu */
         .bar.carb { background:#f97316; }   /* Orange */
@@ -100,7 +138,6 @@
                     <input id="f-prot" type="number" step="0.1" placeholder="Prot /100g" />
                     <input id="f-carb" type="number" step="0.1" placeholder="Gluc /100g" />
                     <input id="f-fat"  type="number" step="0.1" placeholder="Lip /100g" />
-                    <input id="f-kcal" type="number" step="1"   placeholder="Kcal /100g" />
                     <input id="f-kcal" type="number" step="1"   placeholder="Kcal /100g" />
 
 <!-- Nouvelle liste Catégorie -->
@@ -243,6 +280,8 @@
       <button onclick="supprimerAliment(${index})">❌</button>
   </td>
 `;
+// Après avoir créé tr et avant appendChild
+tr.classList.add("fade-in");
 
                 $tbody.appendChild(tr);
             });
@@ -276,6 +315,8 @@
       <button onclick="supprimerPlat(${index})">❌</button>
   </td>
 `;
+// Après avoir créé tr et avant appendChild
+tr.classList.add("fade-in");
 
                 $tbodyPlats.appendChild(tr);
             });
@@ -478,12 +519,19 @@
 
         // --- Totaux ---
         function majBarre(id, valeur, objectif) {
-            const bar = document.getElementById(id);
-            let ratio = (valeur / objectif) * 100;
-            bar.style.width = ratio + "%";
-            bar.textContent = Math.round(ratio) + "%";
-            bar.className = "bar" + (valeur > objectif ? " over" : "");
-        }
+    const bar = document.getElementById(id);
+    let ratio = (valeur / objectif) * 100;
+    bar.style.width = ratio + "%";
+    bar.textContent = Math.round(ratio) + "%";
+
+    // On conserve la classe spécifique et on ajoute seulement "over" si besoin
+    if(valeur > objectif) {
+        bar.classList.add("over");
+    } else {
+        bar.classList.remove("over");
+    }
+}
+
 
         function computeTotals() {
             const foods = getFoods();
@@ -598,6 +646,7 @@
 
 </body>
 </html>
+
 
 
 
