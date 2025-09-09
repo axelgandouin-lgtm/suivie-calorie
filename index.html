@@ -537,6 +537,16 @@
             localStorage.setItem("historique",JSON.stringify(data));
             alert("Journée sauvegardée !");
         }
+
+        function getCatIcon(cat){
+    switch(cat){
+        case "prot": return "🥩";
+        case "carb": return "🍚";
+        case "fat":  return "🥑";
+        default: return "❓";
+    }
+}
+
         function nouvelleJournee(){
             sauvegarderJournee();
             localStorage.removeItem(LS_QTY);
@@ -588,5 +598,6 @@
 
 </body>
 </html>
+
 
 
