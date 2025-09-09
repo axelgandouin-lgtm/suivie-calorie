@@ -155,6 +155,17 @@
                     <button id="btn-clear-custom" class="danger">Vider persos</button>
                 </div>
             </details>
+            <div class="row" style="margin-bottom:10px; align-items:center;">
+  <label>Filtrer par catégorie : </label>
+  <select id="filter-cat">
+    <option value="">Toutes</option>
+    <option value="prot">🥩 Protéines</option>
+    <option value="carb">🍚 Glucides</option>
+    <option value="fat">🥑 Lipides</option>
+    <option value="cal">🔥 Autre/Calories</option>
+  </select>
+</div>
+
             <table id="tbl">
                 <thead>
                 <tr>
@@ -272,45 +283,56 @@ let objectifs = getObj();
     function savePlats(p){ localStorage.setItem(LS_PLATS,JSON.stringify(p)); }
 
     // --- Render Ingrédients ---
-    function renderTable(){
-        const foods=getFoods();
-        const qmap=getQuantities();
-        const term=($q.value||"").toLowerCase();
-        $tbody.innerHTML="";
-        foods.filter(f=>!term||f.Nom.toLowerCase().includes(term)).forEach((f,index)=>{
-            const qty = qmap[f.Nom] || 0;
-            const tr=document.createElement("tr");
-            tr.innerHTML = `
-      <td data-label="Aliment" style="text-align:left">${f.Nom}</td>
-      <td data-label="Prot (/100g)">${f.Proteines}</td>
-      <td data-label="Gluc (/100g)">${f.Glucides}</td>
-      <td data-label="Lip (/100g)">${f.Lipides}</td>
-      <td data-label="Kcal (/100g)">${f.Calories}</td>
-      <td data-label="Catégorie">${getCatIcon(f.Categorie)}</td>
-      <td data-label="Quantité (g)">
-          <input class="qty-inp" type="number" min="0" step="1" value="${qty}" data-name="${f.Nom}">
-      </td>
-      <td data-label="Actions">
-          <button onclick="modifierAliment(${index})">✏️</button>
-          <button onclick="supprimerAliment(${index})">❌</button>
-      </td>
-    `;
-            tr.classList.add("fade-in");
-            $tbody.appendChild(tr);
-        });
+    function renderTable() {
+    const foods = getFoods();
+    const qmap = getQuantities();
+    const term = ($q.value||"").toLowerCase();
+    const catFilter = document.getElementById("filter-cat").value; // <--- filtre
 
-        // Attacher les événements aux inputs fraîchement créés
-        $tbody.querySelectorAll(".qty-inp").forEach(inp=>{
-            inp.addEventListener("input",()=>{
-                const map=getQuantities();
-                map[inp.dataset.name]=Math.max(0,Number(inp.value||0));
-                saveQuantities(map);
-                computeTotals();
-            });
-        });
+    $tbody.innerHTML = "";
 
-        computeTotals();
-    }
+    foods.filter(f => 
+        (!term || f.Nom.toLowerCase().includes(term)) &&
+        (!catFilter || f.Categorie === catFilter) // <--- filtrage
+    ).forEach((f, index) => {
+        const qty = qmap[f.Nom] || 0;
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+            <td data-label="Aliment" style="text-align:left">${f.Nom}</td>
+            <td data-label="Prot (/100g)">${f.Proteines}</td>
+            <td data-label="Gluc (/100g)">${f.Glucides}</td>
+            <td data-label="Lip (/100g)">${f.Lipides}</td>
+            <td data-label="Kcal (/100g)">${f.Calories}</td>
+            <td data-label="Catégorie">
+                <span class="cat-icon cat-${f.Categorie}">
+                  ${getCatIcon(f.Categorie)} ${f.Categorie}
+                </span>
+            </td>
+            <td data-label="Quantité (g)">
+                <input class="qty-inp" type="number" min="0" step="1" value="${qty}" data-name="${f.Nom}">
+            </td>
+            <td data-label="Actions">
+                <button onclick="modifierAliment(${index})">✏️</button>
+                <button onclick="supprimerAliment(${index})">❌</button>
+            </td>
+        `;
+        tr.classList.add("fade-in");
+        $tbody.appendChild(tr);
+    });
+
+    // Attacher les événements aux inputs fraîchement créés
+    $tbody.querySelectorAll(".qty-inp").forEach(inp=>{
+        inp.addEventListener("input",()=>{
+            const map = getQuantities();
+            map[inp.dataset.name] = Math.max(0, Number(inp.value || 0));
+            saveQuantities(map);
+            computeTotals();
+        });
+    });
+
+    computeTotals();
+}
+
 
     // --- Render Plats ---
     function renderPlats(){
@@ -738,6 +760,7 @@ function sauverObj(){
 
 </body>
 </html>
+
 
 
 
