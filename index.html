@@ -517,74 +517,95 @@ tr.classList.add("fade-in");
             computeTotals();
         });
 
-        // --- Totaux ---
-        function majBarre(id, valeur, objectif) {
+      
+function majBarre(id, valeur, objectif) {
     const bar = document.getElementById(id);
     let ratio = (valeur / objectif) * 100;
     bar.style.width = ratio + "%";
     bar.textContent = Math.round(ratio) + "%";
 
-    // On conserve la classe spécifique et on ajoute seulement "over" si besoin
-    if(valeur > objectif) {
+    // Conserver la couleur spécifique
+    bar.classList.remove("over");
+    if(bar.id==="barProt") bar.className="bar prot";
+    if(bar.id==="barCarb") bar.className="bar carb";
+    if(bar.id==="barFat")  bar.className="bar fat";
+    if(bar.id==="barCal")  bar.className="bar cal";
+
+    if(valeur > objectif){
         bar.classList.add("over");
-    } else {
-        bar.classList.remove("over");
     }
 }
 
+function computeTotals() {
+    const foods = getFoods();
+    const qmap = getQuantities();
+    let p=0,c=0,f=0,k=0;
 
-        function computeTotals() {
-            const foods = getFoods();
-            const qmap = getQuantities();
-            let p=0,c=0,f=0,k=0;
+    // Ingrédients
+    foods.forEach(item => {
+        const q = qmap[item.Nom] || 0;
+        const ratio = q/100;
+        p += item.Proteines * ratio;
+        c += item.Glucides * ratio;
+        f += item.Lipides * ratio;
+        k += item.Calories * ratio;
+    });
 
-            // --- Ingrédients (par 100g) ---
-            foods.forEach(item => {
-                const q = qmap[item.Nom] || 0;
-                const ratio = q/100;
-                p += item.Proteines * ratio;
-                c += item.Glucides * ratio;
-                f += item.Lipides * ratio;
-                k += item.Calories * ratio;
-            });
-
-            // --- Plats (par portion) ---
-            const plats = getPlats();
-            $tbodyPlats.querySelectorAll('input[type="number"]').forEach((inp,i)=>{
-                const qty = parseFloat(inp.value)||0;
-                if(qty>0){
-                    const plat = plats[i];
-                    p += plat.totalProt * qty;
-                    c += plat.totalCarb * qty;
-                    f += plat.totalFat * qty;
-                    k += plat.totalCal * qty;
-                }
-            });
-
-            // --- Mise à jour affichage ---
-            document.getElementById("t-prot").textContent = p.toFixed(1) + " g";
-            document.getElementById("t-carb").textContent = c.toFixed(1) + " g";
-            document.getElementById("t-fat").textContent  = f.toFixed(1) + " g";
-            document.getElementById("t-kcal").textContent = Math.round(k) + " kcal";
-
-            majBarre("barProt", p, objectifs.prot);
-            majBarre("barCarb", c, objectifs.carb);
-            majBarre("barFat", f, objectifs.fat);
-            majBarre("barCal", k, objectifs.cal);
+    // Plats
+    const plats = getPlats();
+    $tbodyPlats.querySelectorAll('input[type="number"]').forEach((inp,i)=>{
+        const qty = parseFloat(inp.value)||0;
+        if(qty>0){
+            const plat = plats[i];
+            p += plat.totalProt * qty;
+            c += plat.totalCarb * qty;
+            f += plat.totalFat * qty;
+            k += plat.totalCal * qty;
         }
+    });
+
+    // Mise à jour affichage
+    document.getElementById("t-prot").dataset.value = p;
+    document.getElementById("t-carb").dataset.value = c;
+    document.getElementById("t-fat").dataset.value = f;
+    document.getElementById("t-kcal").dataset.value = k;
+
+    document.getElementById("t-prot").textContent = p.toFixed(1) + " g";
+    document.getElementById("t-carb").textContent = c.toFixed(1) + " g";
+    document.getElementById("t-fat").textContent  = f.toFixed(1) + " g";
+    document.getElementById("t-kcal").textContent = Math.round(k) + " kcal";
+
+    majBarre("barProt", p, objectifs.prot);
+    majBarre("barCarb", c, objectifs.carb);
+    majBarre("barFat", f, objectifs.fat);
+    majBarre("barCal", k, objectifs.cal);
+}
+
+// Sauvegarde correcte avec valeurs numériques
+function sauvegarderJournee(){
+    let data=JSON.parse(localStorage.getItem("historique")||"{}");
+    let today=new Date().toISOString().slice(0,10);
+    data[today]={
+        prot: parseFloat(document.getElementById("t-prot").dataset.value),
+        carb: parseFloat(document.getElementById("t-carb").dataset.value),
+        fat:  parseFloat(document.getElementById("t-fat").dataset.value),
+        cal:  parseFloat(document.getElementById("t-kcal").dataset.value)
+    };
+    localStorage.setItem("historique",JSON.stringify(data));
+    alert("Journée sauvegardée !");
+}
+
+// Correction des inputs quantité dans renderTable
+$tbody.querySelectorAll("input[type=number]").forEach(inp=>{
+    inp.addEventListener("input",()=>{
+        const map=getQuantities();
+        map[inp.dataset.nom]=Math.max(0,Number(inp.value||0));
+        saveQuantities(map);
+        computeTotals();
+    });
+});
 
 
-        // --- Sauvegarde Journée ---
-        function sauvegarderJournee(){
-            let data=JSON.parse(localStorage.getItem("historique")||"{}");
-            let today=new Date().toISOString().slice(0,10);
-            data[today]={prot:parseFloat(document.getElementById("t-prot").textContent),
-                carb:parseFloat(document.getElementById("t-carb").textContent),
-                fat:parseFloat(document.getElementById("t-fat").textContent),
-                cal:parseFloat(document.getElementById("t-kcal").textContent)};
-            localStorage.setItem("historique",JSON.stringify(data));
-            alert("Journée sauvegardée !");
-        }
 
         function getCatIcon(cat){
     switch(cat){
@@ -646,9 +667,3 @@ tr.classList.add("fade-in");
 
 </body>
 </html>
-
-
-
-
-
-
