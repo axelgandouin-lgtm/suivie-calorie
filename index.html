@@ -1,168 +1,121 @@
+<!DOCTYPE html>
+<html lang="fr">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Suivi Calories & Macros - Plats interactifs</title>
-
-<style>
-:root { 
-    --bg:#0f172a; 
-    --card:#111827; 
-    --muted:#6b7280; 
-    --text:#e5e7eb; 
-    --accent:#22c55e; 
-    --prot:#3b82f6; 
-    --carb:#f97316; 
-    --fat:#a855f7; 
-    --cal:#22c55e;
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Suivi Calories & Macros - Plats interactifs</title>
+    <style>
+        :root { --bg:#0f172a; --card:#111827; --muted:#6b7280; --text:#e5e7eb; --accent:#22c55e; }
+        *{box-sizing:border-box}
+        body{margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial; background:var(--bg); color:var(--text)}
+        .wrap{max-width:960px; margin:0 auto; padding:24px}
+        .card{background:var(--card); border:1px solid #1f2937; border-radius:18px; padding:18px; box-shadow:0 10px 20px rgba(0,0,0,.25)}
+        h1{margin:0 0 8px; font-size:26px}
+        p.helper{margin:0 0 16px; color:var(--muted); font-size:14px}
+        .row{display:flex; gap:10px; flex-wrap:wrap; align-items:center}
+        input[type="text"], input[type="number"], button{height:40px; border-radius:10px; border:1px solid #374151; background:#0b1220; color:var(--text); padding:0 12px}
+        input[type="number"]{width:90px}
+        button{cursor:pointer}
+        button.primary{background:#0b3b22; border-color:#1f5134}
+        button.danger{background:#3b0b0b; border-color:#512121}
+        table{width:100%; border-collapse:separate; border-spacing:0; margin-top:12px; display:block; overflow-x:auto;}
+        th,td{border-bottom:1px solid #1f2937; padding:10px; text-align:center; font-size:14px}
+        thead th{position:sticky; top:0; background:#0b1220; z-index:1}
+        tbody tr:hover{background:#0b1220}
+        /* Lignes du tableau (desktop) */
+tbody tr {
+    transition: all 0.3s ease; /* pour animation hover */
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15); /* ombre douce */
+    margin-bottom: 8px; /* espace entre lignes */
+    border-radius: 10px; /* coins arrondis */
 }
 
-*{box-sizing:border-box}
-
-body{
-    margin:0; 
-    font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial; 
-    background:var(--bg); 
-    color:var(--text);
-    height:100vh;
-    display:flex;
-    flex-direction:column;
+/* Hover léger pour les lignes */
+tbody tr:hover {
+    background: #111827;
+    transform: translateY(-2px); /* léger mouvement */
 }
 
-.wrap { 
-    max-width:960px; 
-    margin:0 auto; 
-    padding:24px; 
-    display:flex; 
-    flex-direction:column; 
+/* Pour les cartes des plats (modal ou sections) */
+.card, .modal-content {
+    transition: all 0.3s ease;
+}
+/* Animation fade-in */
+.fade-in {
+    animation: fadeIn 0.5s ease forwards;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-5px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+        .totals{display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-top:16px}
+        .stat{background:#0b1220; border:1px solid #1f2937; border-radius:12px; padding:12px; text-align:center}
+        .stat b{display:block; font-size:18px}
+        details{margin-top:14px}
+        details summary{cursor:pointer; color:#a7f3d0}
+        .actions{display:flex; gap:10px; margin-top:20px; flex-wrap:wrap}
+        .actions button{flex:1}
+        .bar-container { background:#1f2937; border-radius:10px; height:20px; width:100%; margin:5px 0; }
+        .bar {
     height:100%;
+    border-radius:10px;
+    background:var(--accent);
+    text-align:right;
+    padding-right:5px;
+    color:white;
+    font-size:12px;
+    transition: width 1s ease; /* <-- ajoute cette ligne */
 }
 
-.header { 
-    flex: 0 0 auto; 
-}
+        .bar.over { background:#dc2626; }
+        .bar.prot { background:#3b82f6; }   /* Bleu */
+        .bar.carb { background:#f97316; }   /* Orange */
+        .bar.fat  { background:#a855f7; }   /* Violet */
+        .bar.cal  { background:#22c55e; }   /* Vert */
+        .modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); overflow:auto; z-index: 1000 }
+        .modal-content { background:#111827; margin:5% auto; padding:20px; width:90%; max-width:700px; border-radius:10px; color:var(--text); position : relative; z-index: 1001;}
+        .close { float:right; cursor:pointer; font-size:20px; }
+        .tabs{display:flex; gap:10px; margin-bottom:12px;}
+        .tab-btn{flex:1; padding:10px; cursor:pointer; border:none; border-radius:10px; background:#1f2937; color:var(--text)}
+        .tab-btn.active{background:var(--accent); color:#0f172a}
+        @media (max-width:640px){ h1{font-size:22px} input[type="number"]{width:80px} .totals{grid-template-columns:1fr;} }
+        @media (max-width:640px){
+      table, thead, tbody, th, td, tr {
+        display: block;
+      }
 
-.scrollable { 
-    flex: 1 1 auto; 
-    overflow-y: auto; 
-    margin-top:12px; 
-    padding-right:6px;
-}
+      thead {
+        display: none;
+      }
 
-/* Cartes & tableaux */
-.card{background:var(--card); border:1px solid #1f2937; border-radius:18px; padding:18px; box-shadow:0 10px 20px rgba(0,0,0,.25); margin-bottom:12px; transition: all 0.3s ease;}
-.card:hover{transform: translateY(-2px); box-shadow:0 12px 24px rgba(0,0,0,.3);}
-table{width:100%; border-collapse:separate; border-spacing:0; margin-top:12px; display:block; overflow-x:auto;}
-th,td{border-bottom:1px solid #1f2937; padding:10px; text-align:center; font-size:14px}
-thead th{position:sticky; top:0; background:#0b1220; z-index:1}
-tbody tr:hover{background:#0b1220}
-.totals{display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-top:16px}
-.stat{background:#0b1220; border:1px solid #1f2937; border-radius:12px; padding:12px; text-align:center}
-.stat b{display:block; font-size:18px}
-.row{display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:8px}
-
-input[type="text"], input[type="number"], button, select{
-    height:40px; 
-    border-radius:10px; 
-    border:1px solid #374151; 
-    background:#0b1220; 
-    color:var(--text); 
-    padding:0 12px;
-}
-
-input[type="number"]{width:90px}
-button{cursor:pointer; transition: all 0.2s ease;}
-button.primary{background:#0b3b22; border-color:#1f5134}
-button.danger{background:#3b0b0b; border-color:#512121}
-
-.bar-container { 
-    background:#1f2937; 
-    border-radius:10px; 
-    height:20px; 
-    width:100%; 
-    margin:5px 0; 
-    overflow:hidden;
-}
-
-.bar { 
-    height:100%; 
-    border-radius:10px; 
-    text-align:right; 
-    padding-right:5px; 
-    color:white; 
-    font-size:12px; 
-    width:0%; 
-    transition: width 0.5s ease; 
-}
-
-.bar.prot { background: var(--prot); }
-.bar.carb { background: var(--carb); }
-.bar.fat  { background: var(--fat); }
-.bar.cal  { background: var(--cal); }
-
-.modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); overflow:auto; z-index: 1000 }
-.modal-content { background:#111827; margin:5% auto; padding:20px; width:90%; max-width:700px; border-radius:10px; color:var(--text); position : relative; z-index: 1001;}
-.close { float:right; cursor:pointer; font-size:20px; }
-
-.tabs{display:flex; gap:10px; margin-bottom:12px;}
-.tab-btn{flex:1; padding:10px; cursor:pointer; border:none; border-radius:10px; background:#1f2937; color:var(--text); transition: all 0.2s ease;}
-.tab-btn.active{background:var(--accent); color:#0f172a}
-
-details summary{cursor:pointer; color:#a7f3d0}
-
-/* Mobile Cards */
-@media (max-width:640px){
-    h1{font-size:22px} 
-    input[type="number"]{width:80px} 
-    .totals{grid-template-columns:1fr;} 
-    table, thead, tbody, th, td, tr { display:block; }
-    thead { display:none; }
-    tbody tr {
+      tbody tr {
         margin-bottom: 12px;
         background: #0b1220;
         padding: 12px;
         border-radius: 12px;
         box-shadow: 0 4px 8px rgba(0,0,0,0.25);
-        transition: all 0.3s ease;
-    }
-    tbody td {
+      }
+
+      tbody td {
         display: flex;
         justify-content: space-between;
         padding: 6px 0;
         border: none;
         font-size: 14px;
-    }
-    tbody td::before {
+      }
+
+      tbody td::before {
         content: attr(data-label);
         font-weight: bold;
         color: var(--muted);
         margin-right: 8px;
+      }
     }
-}
-
-/* Boutons flottants */
-.floating-btn {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    z-index: 999;
-    padding: 12px 18px;
-    border-radius: 50px;
-    font-size: 16px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-.floating-btn:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 6px 16px rgba(0,0,0,0.4);
-}
-.floating-btn.danger { right: 140px; }
-
-</style>
-
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-
 <body>
 <div class="wrap">
     <div class="card">
