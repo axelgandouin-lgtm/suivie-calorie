@@ -120,7 +120,7 @@ tbody tr:hover {
 <div class="wrap">
     <div class="card">
         <h1>Suivi Calories & Macros</h1>
-        <p class="helper">Tout est <b>par 100 g</b>. Saisis la quantité pour chaque aliment ou plat.</p>
+        <p class="helper">Tout est <b>par 100 g</b>. Saisis la  pour chaque aliment ou plat.</p>
 
         <div class="tabs">
             <button class="tab-btn active" data-tab="ingredients">Ingrédients</button>
@@ -273,7 +273,7 @@ tbody tr:hover {
   <td data-label="Kcal (/100g)">${f.Calories}</td>
   <td data-label="Catégorie">${getCatIcon(f.Categorie)}</td>
   <td data-label="Quantité (g)">
-      <input type="number" min="0" step="1" value="${q}" data-index="${index}">
+      <input type="number" min="0" step="1" value="${q}" data-nom="${f.Nom}"">
   </td>
   <td data-label="Actions">
       <button onclick="modifierAliment(${index})">✏️</button>
@@ -646,6 +646,7 @@ tr.classList.add("fade-in");
 
 </body>
 </html>
+
 
 
 
