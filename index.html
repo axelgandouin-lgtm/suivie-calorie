@@ -238,8 +238,17 @@
 
    
     const LS_CUSTOM="cm_foods_custom_v5";
-    const LS_QTY="cm_quantities_v5";
-    const LS_PLATS="cm_plats_v3";
+const LS_QTY="cm_quantities_v5";
+const LS_PLATS="cm_plats_v3";
+
+/* --- objectifs utilisateur (persistés) --- */
+const LS_OBJ = "cm_objectifs_v1";
+function getObj(){
+  return JSON.parse(localStorage.getItem(LS_OBJ)) || {prot:160, carb:220, fat:60, cal:2200};
+}
+// on initialise objectifs AVANT toute fonction qui s'en sert
+let objectifs = getObj();
+
 
     const $q=document.getElementById("q");
     const $tbody=document.querySelector("#tbl tbody");
@@ -671,13 +680,7 @@
     // Render initial
     renderTable();
     renderPlats();
-    const LS_OBJ = "cm_objectifs_v1";
-
-// Charger les objectifs depuis localStorage
-function getObj(){
-  return JSON.parse(localStorage.getItem(LS_OBJ)) || {prot:160, carb:220, fat:60, cal:2200};
-}
-let objectifs = getObj();
+    
 
 // Ouvrir la modal
 function ouvrirObjModal(){
@@ -735,5 +738,6 @@ function sauverObj(){
 
 </body>
 </html>
+
 
 
