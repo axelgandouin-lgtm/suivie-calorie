@@ -185,8 +185,7 @@
         <div id="tab-plats" class="tab-content" style="display:none;">
             <div class="row" style="margin-bottom:8px">
                 <input id="p-nom" type="text" placeholder="Nom du plat…" style="flex:1" />
-                <button id="btn-add-plat" class="primary" onclick="ouvrirPlatModal()">Ajouter plat</button>
-
+                <button id="btn-add-plat" class="primary">Ajouter plat</button>
             </div>
             <table id="tbl-plats">
                 <thead>
@@ -397,7 +396,7 @@ let objectifs = getObj();
           <input class="plat-inp" type="number" min="0" step="1" value="0" data-index="${index}">
       </td>
       <td data-label="Actions">
-          <button onclick="ouvrirPlatModal(${index})">✏️</button>
+          <button onclick="modifierPlat(${index})">✏️</button>
           <button onclick="supprimerPlat(${index})">❌</button>
       </td>
     `;
@@ -506,11 +505,32 @@ let objectifs = getObj();
 
 
     // Ouvrir modal pour modifier
+function modifierPlat(index){
+    const plats = getPlats();
+    const plat = plats[index];
+    document.getElementById("modal-plat").style.display="block";
+    document.getElementById("p-nom").value = plat.Nom;
+    document.getElementById("modal-plat").dataset.editIndex = index; // <-- stock index
 
+    const list=document.getElementById("ingredients-list");
+    list.innerHTML="";
+    getFoods().forEach((i,idx)=>{
+        const existing = plat.ingredients.find(ing => ing.Nom===i.Nom);
+        const checked = existing ? "checked" : "";
+        const qtyVal = existing ? existing.Quantite : "";
+        const div=document.createElement("div");
+        div.className="row";
+        div.innerHTML=`<input type="checkbox" data-index="${idx}" ${checked}/> ${i.Nom}
+<input type="number" placeholder="g" style="width:60px" data-index="${idx}" value="${qtyVal}">`;
+        list.appendChild(div);
+    });
+}
 
 
         // Quand on clique sur "Valider"
-       
+       document.getElementById("btn-save-plat").addEventListener("click",()=>{
+    const nom=document.getElementById("p-nom").value.trim();
+    if(!nom){alert("Nom du plat requis"); return;}
 
     const checkboxes=document.querySelectorAll("#ingredients-list input[type=checkbox]");
     let ingredients=[];
@@ -612,7 +632,22 @@ let objectifs = getObj();
 });
 
 
-    
+    document.getElementById("btn-save-plat").addEventListener("click",()=>{
+        const nom=document.getElementById("p-nom").value.trim();
+        if(!nom){alert("Nom du plat requis"); return;}
+        const checkboxes=document.querySelectorAll("#ingredients-list input[type=checkbox]");
+        let ingredients=[];
+        checkboxes.forEach(cb=>{
+            if(cb.checked){
+                const index = parseInt(cb.dataset.index);
+                const qtyInput = document.querySelector(`#ingredients-list input[type=number][data-index='${index}']`);
+                const qty = parseFloat(qtyInput.value) || 0;
+                if(qty > 0){
+                    const f = getFoods()[index];
+                    ingredients.push({Nom: f.Nom, Proteines: f.Proteines, Glucides: f.Glucides, Lipides: f.Lipides, Calories: f.Calories, Quantite: qty});
+                }
+            }
+        });
 
         // Calcul totaux plat
         let totalProt=0, totalCarb=0, totalFat=0, totalCal=0;
@@ -794,18 +829,19 @@ function ouvrirObjModal(){
 }
 // --- Variables globales pour la modal plat ---
 // --- Variables globales pour la modal plat ---
-// --- Variables globales ---
-let allIngredients = []; 
-let currentPlatIndex = null; 
-let checkedMap = {}; // map Nom -> Quantité
+let allIngredients = []; // stocke tous les aliments lors de l'ouverture du modal
+let currentPlatIndex = null; // l'index du plat en modification (null = nouveau)
 
-// --- Ouvrir modal plat (ajout ou modification) ---
+// --- Ouvrir la modal plat ---
 function ouvrirPlatModal(index = null){
     currentPlatIndex = index;
+    const list = document.getElementById("ingredients-list");
     const nomInput = document.getElementById("p-nom");
     const foods = getFoods();
     allIngredients = foods.map(f => ({...f}));
-    checkedMap = {};
+    list.innerHTML = "";
+
+    checkedMap = {}; // reset
 
     if(index !== null){
         const plat = getPlats()[index];
@@ -815,31 +851,26 @@ function ouvrirPlatModal(index = null){
         nomInput.value = "";
     }
 
-    // reset recherche et filtre
-    const searchInput = document.getElementById("ing-search");
-    const filterSelect = document.getElementById("ing-filter");
-    searchInput.value = "";
-    filterSelect.value = "";
+    document.getElementById("ing-search").value = "";
+    document.getElementById("ing-filter").value = "";
 
-    // --- solution 2 : attacher événements + forcer premier rendu ---
-    searchInput.addEventListener("input", () => renderIngredientsList());
-    searchInput.addEventListener("keyup", () => renderIngredientsList()); // bonus : en tapant
-    filterSelect.addEventListener("change", () => renderIngredientsList());
+    renderIngredientsList(); // n'a plus besoin de paramètre
 
-    renderIngredientsList(); // ⚡ déclenche immédiatement un premier affichage
+    document.getElementById("ing-search").oninput = renderIngredientsList;
+    document.getElementById("ing-filter").onchange = renderIngredientsList;
 
-    // enfin, ouvrir la modal
     document.getElementById("modal-plat").style.display = "block";
 }
 
-// --- Rendu ingrédients avec recherche & filtre ---
-function renderIngredientsList(){
+
+// --- Fonction pour rendre la liste des ingrédients ---
+function renderIngredientsList(checkedMap) {
     const list = document.getElementById("ingredients-list");
     const searchTerm = document.getElementById("ing-search").value.toLowerCase();
     const catFilter = document.getElementById("ing-filter").value;
 
-    // MàJ checkedMap avant rerender
-    document.querySelectorAll("#ingredients-list .row").forEach(row=>{
+    // Avant de rerender, mettre à jour checkedMap avec les valeurs actuelles
+    document.querySelectorAll("#ingredients-list .row").forEach(row => {
         const cb = row.querySelector("input[type=checkbox]");
         const qtyInput = row.querySelector("input[type=number]");
         const nom = allIngredients[parseInt(cb.dataset.index)].Nom;
@@ -850,9 +881,11 @@ function renderIngredientsList(){
         }
     });
 
+    // Vider la liste
     list.innerHTML = "";
 
-    allIngredients.forEach((f, idx)=>{
+    // Filtrer et afficher
+    allIngredients.forEach((f, idx) => {
         if(searchTerm && !f.Nom.toLowerCase().includes(searchTerm)) return;
         if(catFilter && f.Categorie !== catFilter) return;
 
@@ -867,16 +900,17 @@ function renderIngredientsList(){
         `;
         list.appendChild(div);
 
+        // Events pour mettre à jour checkedMap en direct
         const cb = div.querySelector("input[type=checkbox]");
         const qtyInput = div.querySelector("input[type=number]");
-        cb.addEventListener("change", ()=>{
+        cb.addEventListener("change", () => {
             if(cb.checked && qtyInput.value){
                 checkedMap[f.Nom] = parseFloat(qtyInput.value);
             } else {
                 delete checkedMap[f.Nom];
             }
         });
-        qtyInput.addEventListener("input", ()=>{
+        qtyInput.addEventListener("input", () => {
             if(cb.checked && qtyInput.value){
                 checkedMap[f.Nom] = parseFloat(qtyInput.value);
             } else if(cb.checked){
@@ -886,30 +920,33 @@ function renderIngredientsList(){
     });
 }
 
-// --- Sauvegarde plat ---
-document.getElementById("btn-save-plat").onclick = ()=>{
+// --- Sauvegarder plat ---
+document.getElementById("btn-save-plat").onclick = () => {
     const nom = document.getElementById("p-nom").value.trim();
     if(!nom){ alert("Nom du plat requis"); return; }
 
-    const ingredients = [];
-    for(let nomIng in checkedMap){
-        const qty = checkedMap[nomIng];
-        if(qty > 0){
-            const f = allIngredients.find(f => f.Nom === nomIng);
-            ingredients.push({
-                Nom: f.Nom, Proteines: f.Proteines, Glucides: f.Glucides, 
-                Lipides: f.Lipides, Calories: f.Calories, Quantite: qty
-            });
+    const checkboxes = document.querySelectorAll("#ingredients-list input[type=checkbox]");
+    let ingredients = [];
+
+    checkboxes.forEach(cb => {
+        if(cb.checked){
+            const idx = parseInt(cb.dataset.index);
+            const qtyInput = document.querySelector(`#ingredients-list input[type=number][data-index='${idx}']`);
+            const qty = parseFloat(qtyInput.value) || 0;
+            if(qty > 0){
+                const f = allIngredients[idx];
+                ingredients.push({Nom: f.Nom, Proteines: f.Proteines, Glucides: f.Glucides, Lipides: f.Lipides, Calories: f.Calories, Quantite: qty});
+            }
         }
-    }
+    });
 
     let totalProt=0, totalCarb=0, totalFat=0, totalCal=0;
-    ingredients.forEach(i=>{
+    ingredients.forEach(i => {
         const ratio = i.Quantite / 100;
-        totalProt += i.Proteines*ratio;
-        totalCarb += i.Glucides*ratio;
-        totalFat  += i.Lipides*ratio;
-        totalCal  += i.Calories*ratio;
+        totalProt += i.Proteines * ratio;
+        totalCarb += i.Glucides * ratio;
+        totalFat += i.Lipides * ratio;
+        totalCal += i.Calories * ratio;
     });
 
     let plats = getPlats();
@@ -924,7 +961,6 @@ document.getElementById("btn-save-plat").onclick = ()=>{
     renderPlats();
     computeTotals();
 };
-
 
 
 // Fermer la modal
@@ -975,12 +1011,4 @@ function sauverObj(){
 </html>
 
 
-
-
-
-
-
-
-
-
-
+c'est bon ? 
