@@ -836,8 +836,6 @@ let checkedMap = {}; // map Nom -> Quantité
 
 // --- Ouvrir modal plat (ajout ou modification) ---
 function ouvrirPlatModal(index = null){
-    *
-
     currentPlatIndex = index;
     const nomInput = document.getElementById("p-nom");
     const foods = getFoods();
@@ -852,19 +850,20 @@ function ouvrirPlatModal(index = null){
         nomInput.value = "";
     }
 
-    document.getElementById("ing-search").value = "";
-    document.getElementById("ing-filter").value = "";
+    // reset recherche et filtre
+    const searchInput = document.getElementById("ing-search");
+    const filterSelect = document.getElementById("ing-filter");
+    searchInput.value = "";
+    filterSelect.value = "";
 
-    renderIngredientsList();
-
-    document.getElementById("ing-search").oninput = () => renderIngredientsList();
-    document.getElementById("ing-filter").onchange = () => renderIngredientsList();
-
+    // --- solution 2 : attacher événements + forcer premier rendu ---
     searchInput.addEventListener("input", () => renderIngredientsList());
     searchInput.addEventListener("keyup", () => renderIngredientsList()); // bonus : en tapant
     filterSelect.addEventListener("change", () => renderIngredientsList());
 
     renderIngredientsList(); // ⚡ déclenche immédiatement un premier affichage
+
+    // enfin, ouvrir la modal
     document.getElementById("modal-plat").style.display = "block";
 }
 
@@ -1009,6 +1008,7 @@ function sauverObj(){
 
 </body>
 </html>
+
 
 
 
