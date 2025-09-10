@@ -250,9 +250,7 @@ const defaultAliments = [
 ];
     let deletedDefaults = JSON.parse(localStorage.getItem("deletedDefaults") || "[]");
 
-const base = defaultAliments.map(f => ({...f, type:"default"}));
-const custom = JSON.parse(localStorage.getItem(LS_CUSTOM) || "[]").map(f => ({...f, type:"custom"}));
-return [...base, ...custom];
+
 
 
 /* --- objectifs utilisateur (persistés) --- */
@@ -804,4 +802,5 @@ function sauverObj(){
 
 </body>
 </html>
+
 
