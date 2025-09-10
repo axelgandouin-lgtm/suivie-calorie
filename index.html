@@ -239,9 +239,25 @@
     const LS_CUSTOM="cm_foods_custom_v5";
 const LS_QTY="cm_quantities_v5";
 const LS_PLATS="cm_plats_v3";
+const defaultAliments = [
+  { Nom:"Poulet (blanc, cuit)", Proteines:31, Glucides:0, Lipides:3.6, Calories:165, Categorie:"prot" },
+  { Nom:"Riz basmati (cuit)", Proteines:2.6, Glucides:28, Lipides:0.3, Calories:130, Categorie:"carb" },
+  { Nom:"Œuf entier", Proteines:12.6, Glucides:1.1, Lipides:9.5, Calories:143, Categorie:"prot" },
+  { Nom:"Fromage blanc 0%", Proteines:8, Glucides:4, Lipides:0.2, Calories:48, Categorie:"prot" },
+  { Nom:"Banane", Proteines:1.1, Glucides:23, Lipides:0.3, Calories:89, Categorie:"carb" },
+  { Nom:"Amandes", Proteines:21, Glucides:22, Lipides:50, Calories:579, Categorie:"fat" },
+  { Nom:"Huile d'olive", Proteines:0, Glucides:0, Lipides:100, Calories:900, Categorie:"fat" }
+];
+    let deletedDefaults = JSON.parse(localStorage.getItem("deletedDefaults") || "[]");
+
+const base = defaultAliments.map(f => ({...f, type:"default"}));
+const custom = JSON.parse(localStorage.getItem(LS_CUSTOM) || "[]").map(f => ({...f, type:"custom"}));
+return [...base, ...custom];
+
 
 /* --- objectifs utilisateur (persistés) --- */
 const LS_OBJ = "cm_objectifs_v1";
+    
     // --- Initialisation de base ---
 if(!localStorage.getItem(LS_CUSTOM)){
   const base = [
@@ -279,12 +295,18 @@ let objectifs = getObj();
 
     // --- Stockage ---
     function getFoods(){ 
-  return (JSON.parse(localStorage.getItem(LS_CUSTOM) || "[]"))
-    .map(f => ({
-      ...f,
-      Categorie: f.Categorie || "prot" // sécurité si l’ancien code n’avait pas la catégorie
-    }));
+    const custom = JSON.parse(localStorage.getItem(LS_CUSTOM) || "[]");
+    const override = JSON.parse(localStorage.getItem('cm_aliments_override_v1') || '{}');
+
+    const base = defaultAliments
+        .filter(f => !deletedDefaults.includes(f.Nom)) // <-- filtrage des supprimés
+        .map(f => override[f.Nom] || f);               // <-- applique les overrides si existants
+
+    return [...base, ...custom];
 }
+
+
+
 
     function getQuantities(){ return JSON.parse(localStorage.getItem(LS_QTY)||"{}"); }
     function saveQuantities(q){ localStorage.setItem(LS_QTY,JSON.stringify(q)); }
@@ -297,6 +319,7 @@ let objectifs = getObj();
     const qmap = getQuantities();
     const term = ($q.value||"").toLowerCase();
     const catFilter = document.getElementById("filter-cat").value; // <--- filtre
+
 
     $tbody.innerHTML = "";
 
@@ -400,24 +423,36 @@ let objectifs = getObj();
     }
 
     function supprimerAliment(index){
-        const foods = getFoods();
-        if(index<0||index>=foods.length) return;
-        if(!confirm("Supprimer cet aliment ?")) return;
-        const defaultLen = defaultAliments.length;
-        const name = foods[index].Nom;
-        if(index>=defaultLen){
-            let custom = JSON.parse(localStorage.getItem(LS_CUSTOM)||'[]');
-            custom.splice(index-defaultLen,1);
-            localStorage.setItem(LS_CUSTOM, JSON.stringify(custom));
-        } else {
-            let override = JSON.parse(localStorage.getItem('cm_aliments_override_v1')||'{}');
-            delete override[name];
-            localStorage.setItem('cm_aliments_override_v1', JSON.stringify(override));
-        }
-        const qmap = getQuantities();
-        if(qmap.hasOwnProperty(name)){ delete qmap[name]; saveQuantities(qmap); }
-        renderTable();
+    const foods = getFoods();
+    if(index<0||index>=foods.length) return;
+    if(!confirm("Supprimer cet aliment ?")) return;
+
+    const defaultLen = defaultAliments.filter(f => !deletedDefaults.includes(f.Nom)).length;
+    const name = foods[index].Nom;
+
+    if(index >= defaultLen){
+        // Aliments personnalisés
+        let custom = JSON.parse(localStorage.getItem(LS_CUSTOM)||'[]');
+        custom.splice(index - defaultLen, 1);
+        localStorage.setItem(LS_CUSTOM, JSON.stringify(custom));
+    } else {
+        // Aliments par défaut : ajouter à deletedDefaults
+        deletedDefaults.push(name);
+        localStorage.setItem("deletedDefaults", JSON.stringify(deletedDefaults));
+
+        // Supprime l’override si présent
+        let override = JSON.parse(localStorage.getItem('cm_aliments_override_v1')||'{}');
+        if(override[name]) delete override[name];
+        localStorage.setItem('cm_aliments_override_v1', JSON.stringify(override));
     }
+
+    // Supprime quantité si existante
+    const qmap = getQuantities();
+    if(qmap.hasOwnProperty(name)){ delete qmap[name]; saveQuantities(qmap); }
+
+    renderTable();
+}
+
 
     function modifierPlat(index){
         let plats = getPlats();
@@ -769,3 +804,4 @@ function sauverObj(){
 
 </body>
 </html>
+
