@@ -227,6 +227,21 @@
         <div class="modal-content">
             <span class="close" onclick="document.getElementById('modal-plat').style.display='none'">&times;</span>
             <h3>Créer un plat</h3>
+            <!-- Barre de recherche et filtre -->
+<div style="margin-bottom:8px; display:flex; gap:8px; flex-wrap:wrap;">
+  <input id="ing-search" type="text" placeholder="Rechercher un aliment…" style="flex:1"/>
+  <select id="ing-filter">
+    <option value="">Toutes</option>
+    <option value="prot">🥩 Protéines</option>
+    <option value="carb">🍚 Glucides</option>
+    <option value="fat">🥑 Lipides</option>
+    <option value="cal">🔥 Autre/Calories</option>
+  </select>
+</div>
+
+<!-- Liste des ingrédients -->
+<div id="ingredients-list" style="max-height:400px;overflow:auto"></div>
+
             <div id="ingredients-list" style="max-height:400px;overflow:auto"></div>
             <button id="btn-save-plat" class="primary" style="margin-top:10px">Valider le plat</button>
         </div>
@@ -788,6 +803,9 @@ function modifierPlat(index){
 
     // Listeners
     $q.addEventListener("input",renderTable);
+    // Filtre par catégorie
+document.getElementById("filter-cat").addEventListener("change", renderTable);
+
 
     // Render initial
     renderTable();
@@ -803,6 +821,109 @@ function ouvrirObjModal(){
   document.getElementById("obj-cal").value = obj.cal;
   document.getElementById("objModal").style.display="block";
 }
+// --- Variables globales pour la modal plat ---
+let allIngredients = []; // stocke tous les aliments lors de l'ouverture du modal
+let currentPlatIndex = null; // l'index du plat en modification (null = nouveau)
+
+// --- Ouvrir la modal plat (modifié) ---
+function ouvrirPlatModal(index=null){
+    currentPlatIndex = index;
+    const list = document.getElementById("ingredients-list");
+    const nomInput = document.getElementById("p-nom");
+    const foods = getFoods();
+    allIngredients = foods.map(f => ({...f})); // copie des aliments
+    list.innerHTML = "";
+
+    let checkedMap = {};
+    if(index !== null){
+        const plat = getPlats()[index];
+        nomInput.value = plat.Nom;
+        plat.ingredients.forEach(i => { checkedMap[i.Nom] = i.Quantite; });
+    } else {
+        nomInput.value = "";
+    }
+
+    renderIngredientsList(checkedMap);
+
+    // Initialiser la recherche / filtre
+    const searchInput = document.getElementById("ing-search");
+    const filterSelect = document.getElementById("ing-filter");
+
+    searchInput.value = "";
+    filterSelect.value = "";
+
+    searchInput.oninput = () => renderIngredientsList(checkedMap);
+    filterSelect.onchange = () => renderIngredientsList(checkedMap);
+
+    document.getElementById("modal-plat").style.display = "block";
+}
+
+// --- Fonction pour rendre la liste des ingrédients ---
+function renderIngredientsList(checkedMap){
+    const list = document.getElementById("ingredients-list");
+    const searchTerm = document.getElementById("ing-search").value.toLowerCase();
+    const catFilter = document.getElementById("ing-filter").value;
+
+    list.innerHTML = "";
+
+    allIngredients.forEach((f, idx) => {
+        if(searchTerm && !f.Nom.toLowerCase().includes(searchTerm)) return;
+        if(catFilter && f.Categorie !== catFilter) return;
+
+        const checked = checkedMap[f.Nom] ? "checked" : "";
+        const qtyVal = checkedMap[f.Nom] || "";
+
+        const div = document.createElement("div");
+        div.className = "row";
+        div.innerHTML = `
+            <input type="checkbox" data-index="${idx}" ${checked}/> ${f.Nom}
+            <input type="number" placeholder="g" style="width:60px" data-index="${idx}" value="${qtyVal}">
+        `;
+        list.appendChild(div);
+    });
+}
+
+// --- Sauvegarder plat (inchangé mais adapté) ---
+document.getElementById("btn-save-plat").onclick = () => {
+    const nom = document.getElementById("p-nom").value.trim();
+    if(!nom){ alert("Nom du plat requis"); return; }
+
+    const checkboxes = document.querySelectorAll("#ingredients-list input[type=checkbox]");
+    let ingredients = [];
+
+    checkboxes.forEach(cb => {
+        if(cb.checked){
+            const idx = parseInt(cb.dataset.index);
+            const qtyInput = document.querySelector(`#ingredients-list input[type=number][data-index='${idx}']`);
+            const qty = parseFloat(qtyInput.value) || 0;
+            if(qty > 0){
+                const f = allIngredients[idx];
+                ingredients.push({Nom: f.Nom, Proteines: f.Proteines, Glucides: f.Glucides, Lipides: f.Lipides, Calories: f.Calories, Quantite: qty});
+            }
+        }
+    });
+
+    let totalProt=0, totalCarb=0, totalFat=0, totalCal=0;
+    ingredients.forEach(i => {
+        const ratio = i.Quantite / 100;
+        totalProt += i.Proteines * ratio;
+        totalCarb += i.Glucides * ratio;
+        totalFat += i.Lipides * ratio;
+        totalCal += i.Calories * ratio;
+    });
+
+    let plats = getPlats();
+    if(currentPlatIndex !== null){
+        plats[currentPlatIndex] = {Nom: nom, ingredients, totalProt, totalCarb, totalFat, totalCal};
+    } else {
+        plats.push({Nom: nom, ingredients, totalProt, totalCarb, totalFat, totalCal});
+    }
+
+    savePlats(plats);
+    document.getElementById("modal-plat").style.display='none';
+    renderPlats();
+    computeTotals();
+};
 
 // Fermer la modal
 function fermerObjModal(){
@@ -850,6 +971,7 @@ function sauverObj(){
 
 </body>
 </html>
+
 
 
 
