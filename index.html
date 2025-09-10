@@ -393,32 +393,67 @@ let objectifs = getObj();
     }
 
     // --- Supprimer / Modifier aliments ---
-    function modifierAliment(index) {
-        const foods = getFoods();
-        if(index<0||index>=foods.length) return;
-        const aliment = foods[index];
-        const newNom = prompt("Nom de l’aliment :", aliment.Nom);
-        if(!newNom) return;
-        const prot = parseFloat(prompt("Protéines /100g :", aliment.Proteines));
-        const carb = parseFloat(prompt("Glucides /100g :", aliment.Glucides));
-        const fat  = parseFloat(prompt("Lipides /100g :", aliment.Lipides));
-        const cal  = parseFloat(prompt("Calories /100g :", aliment.Calories));
-        if([prot,carb,fat,cal].some(v => Number.isNaN(v))) return;
+   function modifierAliment(index) {
+    const foods = getFoods();
+    if(index<0||index>=foods.length) return;
+    const aliment = foods[index];
+    const newNom = prompt("Nom de l’aliment :", aliment.Nom);
+    if(!newNom) return;  // si annule, on sort
+    const prot = parseFloat(prompt("Protéines /100g :", aliment.Proteines));
+    const carb = parseFloat(prompt("Glucides /100g :", aliment.Glucides));
+    const fat  = parseFloat(prompt("Lipides /100g :", aliment.Lipides));
+    const cal  = parseFloat(prompt("Calories /100g :", aliment.Calories));
+    if([prot,carb,fat,cal].some(v => Number.isNaN(v))) return;
 
-        const defaultLen = defaultAliments.length;
-        if(index>=defaultLen){
-            const custom = JSON.parse(localStorage.getItem(LS_CUSTOM)||'[]');
-            custom[index-defaultLen] = { Nom:newNom, Proteines:prot, Glucides:carb, Lipides:fat, Calories:cal, Categorie: (custom[index-defaultLen] && custom[index-defaultLen].Categorie) ? custom[index-defaultLen].Categorie : "prot" };
-            localStorage.setItem(LS_CUSTOM, JSON.stringify(custom));
-        } else {
-            // override map (to preserve default edits)
-            const override = JSON.parse(localStorage.getItem('cm_aliments_override_v1')||'{}');
-            override[aliment.Nom] = { Nom:newNom, Proteines:prot, Glucides:carb, Lipides:fat, Calories:cal, Categorie: "prot" };
-            localStorage.setItem('cm_aliments_override_v1', JSON.stringify(override));
-        }
-
-        renderTable();
+    const defaultLen = defaultAliments.length;
+    if(index>=defaultLen){
+        // custom
+        const custom = JSON.parse(localStorage.getItem(LS_CUSTOM)||'[]');
+        custom[index-defaultLen] = { Nom:newNom, Proteines:prot, Glucides:carb, Lipides:fat, Calories:cal, Categorie: (custom[index-defaultLen] && custom[index-defaultLen].Categorie) ? custom[index-defaultLen].Categorie : "prot" };
+        localStorage.setItem(LS_CUSTOM, JSON.stringify(custom));
+    } else {
+        // override
+        const override = JSON.parse(localStorage.getItem('cm_aliments_override_v1')||'{}');
+        override[aliment.Nom] = { Nom:newNom, Proteines:prot, Glucides:carb, Lipides:fat, Calories:cal, Categorie: "prot" };
+        localStorage.setItem('cm_aliments_override_v1', JSON.stringify(override));
     }
+
+    // ✅ Mettre à jour les plats qui contiennent cet aliment
+    const plats = getPlats().map(plat => {
+        let updated = false;
+        plat.ingredients.forEach(ing => {
+            if(ing.Nom === aliment.Nom){
+                ing.Nom = newNom;
+                ing.Proteines = prot;
+                ing.Glucides  = carb;
+                ing.Lipides   = fat;
+                ing.Calories  = cal;
+                updated = true;
+            }
+        });
+        if(updated){
+            let totalProt=0, totalCarb=0, totalFat=0, totalCal=0;
+            plat.ingredients.forEach(i=>{
+                const ratio = i.Quantite/100;
+                totalProt += i.Proteines*ratio;
+                totalCarb += i.Glucides*ratio;
+                totalFat  += i.Lipides*ratio;
+                totalCal  += i.Calories*ratio;
+            });
+            plat.totalProt = totalProt;
+            plat.totalCarb = totalCarb;
+            plat.totalFat  = totalFat;
+            plat.totalCal  = totalCal;
+        }
+        return plat;
+    });
+    localStorage.setItem(LS_PLATS, JSON.stringify(plats));
+
+    renderTable();
+    renderPlats();
+    computeTotals();
+}
+
 
     function supprimerAliment(index){
     const foods = getFoods();
@@ -452,63 +487,76 @@ let objectifs = getObj();
 }
 
 
-    function modifierPlat(index){
-        let plats = getPlats();
-        if(index<0 || index>=plats.length) return;
-        let plat = plats[index];
+    // Ouvrir modal pour modifier
+function modifierPlat(index){
+    const plats = getPlats();
+    const plat = plats[index];
+    document.getElementById("modal-plat").style.display="block";
+    document.getElementById("p-nom").value = plat.Nom;
+    document.getElementById("modal-plat").dataset.editIndex = index; // <-- stock index
 
-        document.getElementById("modal-plat").style.display="block";
-        document.getElementById("p-nom").value = plat.Nom;
-
-        const list=document.getElementById("ingredients-list");
-        list.innerHTML="";
-        getFoods().forEach((i,idx)=>{
-            const existing = plat.ingredients.find(ing => ing.Nom===i.Nom);
-            const checked = existing ? "checked" : "";
-            const qtyVal = existing ? existing.Quantite : "";
-            const div=document.createElement("div");
-            div.className="row";
-            div.innerHTML=`<input type="checkbox" data-index="${idx}" ${checked}/> ${i.Nom}
+    const list=document.getElementById("ingredients-list");
+    list.innerHTML="";
+    getFoods().forEach((i,idx)=>{
+        const existing = plat.ingredients.find(ing => ing.Nom===i.Nom);
+        const checked = existing ? "checked" : "";
+        const qtyVal = existing ? existing.Quantite : "";
+        const div=document.createElement("div");
+        div.className="row";
+        div.innerHTML=`<input type="checkbox" data-index="${idx}" ${checked}/> ${i.Nom}
 <input type="number" placeholder="g" style="width:60px" data-index="${idx}" value="${qtyVal}">`;
-            list.appendChild(div);
-        });
+        list.appendChild(div);
+    });
+}
+
 
         // Quand on clique sur "Valider"
-        document.getElementById("btn-save-plat").onclick = ()=>{
-            const nom=document.getElementById("p-nom").value.trim();
-            if(!nom){alert("Nom du plat requis"); return;}
+       document.getElementById("btn-save-plat").addEventListener("click",()=>{
+    const nom=document.getElementById("p-nom").value.trim();
+    if(!nom){alert("Nom du plat requis"); return;}
 
-            const checkboxes=document.querySelectorAll("#ingredients-list input[type=checkbox]");
-            let ingredients=[];
-            checkboxes.forEach(cb=>{
-                if(cb.checked){
-                    const idx = parseInt(cb.dataset.index);
-                    const qtyInput = document.querySelector(`#ingredients-list input[type=number][data-index='${idx}']`);
-                    const qty = parseFloat(qtyInput.value) || 0;
-                    if(qty > 0){
-                        const f = getFoods()[idx];
-                        ingredients.push({Nom: f.Nom, Proteines: f.Proteines, Glucides: f.Glucides, Lipides: f.Lipides, Calories: f.Calories, Quantite: qty});
-                    }
-                }
-            });
+    const checkboxes=document.querySelectorAll("#ingredients-list input[type=checkbox]");
+    let ingredients=[];
+    checkboxes.forEach(cb=>{
+        if(cb.checked){
+            const idx = parseInt(cb.dataset.index);
+            const qtyInput = document.querySelector(`#ingredients-list input[type=number][data-index='${idx}']`);
+            const qty = parseFloat(qtyInput.value) || 0;
+            if(qty > 0){
+                const f = getFoods()[idx];
+                ingredients.push({Nom: f.Nom, Proteines: f.Proteines, Glucides: f.Glucides, Lipides: f.Lipides, Calories: f.Calories, Quantite: qty});
+            }
+        }
+    });
 
-            let totalProt=0, totalCarb=0, totalFat=0, totalCal=0;
-            ingredients.forEach(i=>{
-                const ratio = i.Quantite/100;
-                totalProt += i.Proteines*ratio;
-                totalCarb += i.Glucides*ratio;
-                totalFat += i.Lipides*ratio;
-                totalCal += i.Calories*ratio;
-            });
+    let totalProt=0, totalCarb=0, totalFat=0, totalCal=0;
+    ingredients.forEach(i=>{
+        const ratio = i.Quantite/100;
+        totalProt += i.Proteines*ratio;
+        totalCarb += i.Glucides*ratio;
+        totalFat  += i.Lipides*ratio;
+        totalCal  += i.Calories*ratio;
+    });
 
-            plats[index] = {Nom: nom, ingredients, totalProt, totalCarb, totalFat, totalCal};
-            savePlats(plats);
-            document.getElementById('modal-plat').style.display='none';
-            document.getElementById("p-nom").value="";
-            renderPlats();
-            computeTotals();
-        };
+    let plats = getPlats();
+    const editIndex = document.getElementById("modal-plat").dataset.editIndex;
+    if(editIndex !== undefined && editIndex !== ""){
+        // Modifier plat existant
+        plats[editIndex] = {Nom: nom, ingredients, totalProt, totalCarb, totalFat, totalCal};
+    } else {
+        // Nouveau plat
+        plats.push({Nom: nom, ingredients, totalProt, totalCarb, totalFat, totalCal});
     }
+
+    localStorage.setItem(LS_PLATS, JSON.stringify(plats));
+    document.getElementById('modal-plat').style.display='none';
+    document.getElementById("p-nom").value="";
+    delete document.getElementById("modal-plat").dataset.editIndex;
+
+    renderPlats();
+    computeTotals();
+});
+
 
     function supprimerPlat(index){
         if(!confirm("Supprimer ce plat ?")) return;
@@ -802,5 +850,6 @@ function sauverObj(){
 
 </body>
 </html>
+
 
 
