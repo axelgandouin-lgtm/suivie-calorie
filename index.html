@@ -246,6 +246,10 @@
     </div>
 
 <script>
+    let allIngredients = [];
+let currentPlatIndex = null;
+let checkedMap = {}; // <-- stock global pour la modal
+
     // --- Données ---
     
    
@@ -825,21 +829,20 @@ function ouvrirObjModal(){
 }
 // --- Variables globales pour la modal plat ---
 // --- Variables globales pour la modal plat ---
-let allIngredients = []; // stocke tous les aliments lors de l'ouverture du modal
-let currentPlatIndex = null; // l'index du plat en modification (null = nouveau)
+// --- Variables globales ---
+let allIngredients = []; 
+let currentPlatIndex = null; 
+let checkedMap = {}; // map Nom -> Quantité
 
-// --- Ouvrir la modal plat ---
-function ouvrirPlatModal(index = null) {
+// --- Ouvrir modal plat (ajout ou modification) ---
+function ouvrirPlatModal(index = null){
     currentPlatIndex = index;
-    const list = document.getElementById("ingredients-list");
     const nomInput = document.getElementById("p-nom");
     const foods = getFoods();
-    allIngredients = foods.map(f => ({ ...f })); // copie des aliments
-    list.innerHTML = "";
+    allIngredients = foods.map(f => ({...f}));
+    checkedMap = {};
 
-    let checkedMap = {}; // clé = Nom ingrédient, valeur = quantité
-
-    if (index !== null) {
+    if(index !== null){
         const plat = getPlats()[index];
         nomInput.value = plat.Nom;
         plat.ingredients.forEach(i => { checkedMap[i.Nom] = i.Quantite; });
@@ -847,29 +850,25 @@ function ouvrirPlatModal(index = null) {
         nomInput.value = "";
     }
 
-    renderIngredientsList(checkedMap);
+    document.getElementById("ing-search").value = "";
+    document.getElementById("ing-filter").value = "";
 
-    // Initialiser la recherche / filtre
-    const searchInput = document.getElementById("ing-search");
-    const filterSelect = document.getElementById("ing-filter");
+    renderIngredientsList();
 
-    searchInput.value = "";
-    filterSelect.value = "";
-
-    searchInput.oninput = () => renderIngredientsList(checkedMap);
-    filterSelect.onchange = () => renderIngredientsList(checkedMap);
+    document.getElementById("ing-search").oninput = renderIngredientsList;
+    document.getElementById("ing-filter").onchange = renderIngredientsList;
 
     document.getElementById("modal-plat").style.display = "block";
 }
 
-// --- Fonction pour rendre la liste des ingrédients ---
-function renderIngredientsList(checkedMap) {
+// --- Rendu ingrédients avec recherche & filtre ---
+function renderIngredientsList(){
     const list = document.getElementById("ingredients-list");
     const searchTerm = document.getElementById("ing-search").value.toLowerCase();
     const catFilter = document.getElementById("ing-filter").value;
 
-    // Avant de rerender, mettre à jour checkedMap avec les valeurs actuelles
-    document.querySelectorAll("#ingredients-list .row").forEach(row => {
+    // MàJ checkedMap avant rerender
+    document.querySelectorAll("#ingredients-list .row").forEach(row=>{
         const cb = row.querySelector("input[type=checkbox]");
         const qtyInput = row.querySelector("input[type=number]");
         const nom = allIngredients[parseInt(cb.dataset.index)].Nom;
@@ -880,11 +879,9 @@ function renderIngredientsList(checkedMap) {
         }
     });
 
-    // Vider la liste
     list.innerHTML = "";
 
-    // Filtrer et afficher
-    allIngredients.forEach((f, idx) => {
+    allIngredients.forEach((f, idx)=>{
         if(searchTerm && !f.Nom.toLowerCase().includes(searchTerm)) return;
         if(catFilter && f.Categorie !== catFilter) return;
 
@@ -899,17 +896,16 @@ function renderIngredientsList(checkedMap) {
         `;
         list.appendChild(div);
 
-        // Events pour mettre à jour checkedMap en direct
         const cb = div.querySelector("input[type=checkbox]");
         const qtyInput = div.querySelector("input[type=number]");
-        cb.addEventListener("change", () => {
+        cb.addEventListener("change", ()=>{
             if(cb.checked && qtyInput.value){
                 checkedMap[f.Nom] = parseFloat(qtyInput.value);
             } else {
                 delete checkedMap[f.Nom];
             }
         });
-        qtyInput.addEventListener("input", () => {
+        qtyInput.addEventListener("input", ()=>{
             if(cb.checked && qtyInput.value){
                 checkedMap[f.Nom] = parseFloat(qtyInput.value);
             } else if(cb.checked){
@@ -919,33 +915,30 @@ function renderIngredientsList(checkedMap) {
     });
 }
 
-// --- Sauvegarder plat ---
-document.getElementById("btn-save-plat").onclick = () => {
+// --- Sauvegarde plat ---
+document.getElementById("btn-save-plat").onclick = ()=>{
     const nom = document.getElementById("p-nom").value.trim();
     if(!nom){ alert("Nom du plat requis"); return; }
 
-    const checkboxes = document.querySelectorAll("#ingredients-list input[type=checkbox]");
-    let ingredients = [];
-
-    checkboxes.forEach(cb => {
-        if(cb.checked){
-            const idx = parseInt(cb.dataset.index);
-            const qtyInput = document.querySelector(`#ingredients-list input[type=number][data-index='${idx}']`);
-            const qty = parseFloat(qtyInput.value) || 0;
-            if(qty > 0){
-                const f = allIngredients[idx];
-                ingredients.push({Nom: f.Nom, Proteines: f.Proteines, Glucides: f.Glucides, Lipides: f.Lipides, Calories: f.Calories, Quantite: qty});
-            }
+    const ingredients = [];
+    for(let nomIng in checkedMap){
+        const qty = checkedMap[nomIng];
+        if(qty > 0){
+            const f = allIngredients.find(f => f.Nom === nomIng);
+            ingredients.push({
+                Nom: f.Nom, Proteines: f.Proteines, Glucides: f.Glucides, 
+                Lipides: f.Lipides, Calories: f.Calories, Quantite: qty
+            });
         }
-    });
+    }
 
     let totalProt=0, totalCarb=0, totalFat=0, totalCal=0;
-    ingredients.forEach(i => {
+    ingredients.forEach(i=>{
         const ratio = i.Quantite / 100;
-        totalProt += i.Proteines * ratio;
-        totalCarb += i.Glucides * ratio;
-        totalFat += i.Lipides * ratio;
-        totalCal += i.Calories * ratio;
+        totalProt += i.Proteines*ratio;
+        totalCarb += i.Glucides*ratio;
+        totalFat  += i.Lipides*ratio;
+        totalCal  += i.Calories*ratio;
     });
 
     let plats = getPlats();
@@ -960,6 +953,7 @@ document.getElementById("btn-save-plat").onclick = () => {
     renderPlats();
     computeTotals();
 };
+
 
 
 // Fermer la modal
@@ -1008,6 +1002,7 @@ function sauverObj(){
 
 </body>
 </html>
+
 
 
 
