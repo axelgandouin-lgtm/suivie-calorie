@@ -824,32 +824,28 @@ function ouvrirObjModal(){
   document.getElementById("objModal").style.display="block";
 }
 // --- Variables globales pour la modal plat ---
+// --- Variables globales pour la modal plat ---
 let allIngredients = []; // stocke tous les aliments lors de l'ouverture du modal
 let currentPlatIndex = null; // l'index du plat en modification (null = nouveau)
 
-// --- Ouvrir la modal plat (modifié) ---
-function ouvrirPlatModal(index=null){
+// --- Ouvrir la modal plat ---
+function ouvrirPlatModal(index = null) {
     currentPlatIndex = index;
     const list = document.getElementById("ingredients-list");
     const nomInput = document.getElementById("p-nom");
     const foods = getFoods();
-    allIngredients = foods.map(f => ({...f})); // copie des aliments
+    allIngredients = foods.map(f => ({ ...f })); // copie des aliments
     list.innerHTML = "";
 
-    let checkedMap = {};
-    if(index !== null){
+    let checkedMap = {}; // clé = Nom ingrédient, valeur = quantité
+
+    if (index !== null) {
         const plat = getPlats()[index];
         nomInput.value = plat.Nom;
         plat.ingredients.forEach(i => { checkedMap[i.Nom] = i.Quantite; });
     } else {
         nomInput.value = "";
     }
-
-
-if(index !== null){
-    const plat = getPlats()[index];
-    plat.ingredients.forEach(i => { checkedMap[i.Nom] = i.Quantite; });
-}
 
     renderIngredientsList(checkedMap);
 
@@ -867,28 +863,29 @@ if(index !== null){
 }
 
 // --- Fonction pour rendre la liste des ingrédients ---
-function renderIngredientsList(checkedMap){
+function renderIngredientsList(checkedMap) {
     const list = document.getElementById("ingredients-list");
     const searchTerm = document.getElementById("ing-search").value.toLowerCase();
     const catFilter = document.getElementById("ing-filter").value;
 
-    // Avant de rerender, mettre à jour checkedMap avec les valeurs actuelles de la modal
-    document.querySelectorAll("#ingredients-list input[type=checkbox]").forEach(cb => {
-        const idx = parseInt(cb.dataset.index);
-        const qtyInput = document.querySelector(`#ingredients-list input[type=number][data-index='${idx}']`);
+    // Avant de rerender, mettre à jour checkedMap avec les valeurs actuelles
+    document.querySelectorAll("#ingredients-list .row").forEach(row => {
+        const cb = row.querySelector("input[type=checkbox]");
+        const qtyInput = row.querySelector("input[type=number]");
+        const nom = allIngredients[parseInt(cb.dataset.index)].Nom;
         if(cb.checked && qtyInput.value){
-            checkedMap[allIngredients[idx].Nom] = parseFloat(qtyInput.value);
+            checkedMap[nom] = parseFloat(qtyInput.value);
         } else {
-            delete checkedMap[allIngredients[idx].Nom];
+            delete checkedMap[nom];
         }
     });
 
+    // Vider la liste
     list.innerHTML = "";
 
+    // Filtrer et afficher
     allIngredients.forEach((f, idx) => {
-        // Filtre recherche
         if(searchTerm && !f.Nom.toLowerCase().includes(searchTerm)) return;
-        // Filtre catégorie
         if(catFilter && f.Categorie !== catFilter) return;
 
         const checked = checkedMap[f.Nom] ? "checked" : "";
@@ -901,11 +898,28 @@ function renderIngredientsList(checkedMap){
             <input type="number" placeholder="g" style="width:60px" data-index="${idx}" value="${qtyVal}">
         `;
         list.appendChild(div);
+
+        // Events pour mettre à jour checkedMap en direct
+        const cb = div.querySelector("input[type=checkbox]");
+        const qtyInput = div.querySelector("input[type=number]");
+        cb.addEventListener("change", () => {
+            if(cb.checked && qtyInput.value){
+                checkedMap[f.Nom] = parseFloat(qtyInput.value);
+            } else {
+                delete checkedMap[f.Nom];
+            }
+        });
+        qtyInput.addEventListener("input", () => {
+            if(cb.checked && qtyInput.value){
+                checkedMap[f.Nom] = parseFloat(qtyInput.value);
+            } else if(cb.checked){
+                delete checkedMap[f.Nom];
+            }
+        });
     });
 }
 
-
-// --- Sauvegarder plat (inchangé mais adapté) ---
+// --- Sauvegarder plat ---
 document.getElementById("btn-save-plat").onclick = () => {
     const nom = document.getElementById("p-nom").value.trim();
     if(!nom){ alert("Nom du plat requis"); return; }
@@ -946,6 +960,7 @@ document.getElementById("btn-save-plat").onclick = () => {
     renderPlats();
     computeTotals();
 };
+
 
 // Fermer la modal
 function fermerObjModal(){
@@ -993,6 +1008,7 @@ function sauverObj(){
 
 </body>
 </html>
+
 
 
 
