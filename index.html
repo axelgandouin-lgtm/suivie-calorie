@@ -162,7 +162,6 @@
     <option value="prot">🥩 Protéines</option>
     <option value="carb">🍚 Glucides</option>
     <option value="fat">🥑 Lipides</option>
-    <option value="cal">🔥 Autre/Calories</option>
   </select>
 </div>
 
@@ -235,14 +234,13 @@
     <option value="prot">🥩 Protéines</option>
     <option value="carb">🍚 Glucides</option>
     <option value="fat">🥑 Lipides</option>
-    <option value="cal">🔥 Autre/Calories</option>
   </select>
 </div>
 
 <!-- Liste des ingrédients -->
 <div id="ingredients-list" style="max-height:400px;overflow:auto"></div>
 
-            <div id="ingredients-list" style="max-height:400px;overflow:auto"></div>
+          
             <button id="btn-save-plat" class="primary" style="margin-top:10px">Valider le plat</button>
         </div>
     </div>
@@ -614,17 +612,21 @@ function modifierPlat(index){
 
     // --- Ajouter Plat (nouveau) ---
     document.getElementById("btn-add-plat").addEventListener("click",()=>{
-        document.getElementById("modal-plat").style.display="block";
-        const list=document.getElementById("ingredients-list");
-        list.innerHTML="";
-        getFoods().forEach((i,index)=>{
-            const div=document.createElement("div");
-            div.className="row";
-            div.innerHTML=`<input type="checkbox" data-index="${index}"/> ${i.Nom}
-    <input type="number" placeholder="g" style="width:60px" data-index="${index}">`;
-            list.appendChild(div);
-        });
-    });
+    allIngredients = getFoods().map(f => ({...f})); // <-- ajouter
+    currentPlatIndex = null; // nouveau plat
+    document.getElementById("p-nom").value = "";
+
+    const list=document.getElementById("ingredients-list");
+    list.innerHTML="";
+    renderIngredientsList({}); // aucun ingrédient coché pour le moment
+
+    // Réinitialiser recherche et filtre
+    document.getElementById("ing-search").value="";
+    document.getElementById("ing-filter").value="";
+
+    document.getElementById("modal-plat").style.display="block";
+});
+
 
     document.getElementById("btn-save-plat").addEventListener("click",()=>{
         const nom=document.getElementById("p-nom").value.trim();
@@ -842,6 +844,12 @@ function ouvrirPlatModal(index=null){
     } else {
         nomInput.value = "";
     }
+    let checkedMap = {}; // clé = Nom ingrédient, valeur = quantité
+
+if(index !== null){
+    const plat = getPlats()[index];
+    plat.ingredients.forEach(i => { checkedMap[i.Nom] = i.Quantite; });
+}
 
     renderIngredientsList(checkedMap);
 
@@ -864,10 +872,23 @@ function renderIngredientsList(checkedMap){
     const searchTerm = document.getElementById("ing-search").value.toLowerCase();
     const catFilter = document.getElementById("ing-filter").value;
 
+    // Avant de rerender, mettre à jour checkedMap avec les valeurs actuelles de la modal
+    document.querySelectorAll("#ingredients-list input[type=checkbox]").forEach(cb => {
+        const idx = parseInt(cb.dataset.index);
+        const qtyInput = document.querySelector(`#ingredients-list input[type=number][data-index='${idx}']`);
+        if(cb.checked && qtyInput.value){
+            checkedMap[allIngredients[idx].Nom] = parseFloat(qtyInput.value);
+        } else {
+            delete checkedMap[allIngredients[idx].Nom];
+        }
+    });
+
     list.innerHTML = "";
 
     allIngredients.forEach((f, idx) => {
+        // Filtre recherche
         if(searchTerm && !f.Nom.toLowerCase().includes(searchTerm)) return;
+        // Filtre catégorie
         if(catFilter && f.Categorie !== catFilter) return;
 
         const checked = checkedMap[f.Nom] ? "checked" : "";
@@ -882,6 +903,7 @@ function renderIngredientsList(checkedMap){
         list.appendChild(div);
     });
 }
+
 
 // --- Sauvegarder plat (inchangé mais adapté) ---
 document.getElementById("btn-save-plat").onclick = () => {
@@ -971,6 +993,7 @@ function sauverObj(){
 
 </body>
 </html>
+
 
 
 
