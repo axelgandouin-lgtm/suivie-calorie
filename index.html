@@ -1,976 +1,302 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Suivi Calories & Macros - Plats interactifs</title>
-    <style>
-        :root { --bg:#0f172a; --card:#111827; --muted:#6b7280; --text:#e5e7eb; --accent:#22c55e; }
-        *{box-sizing:border-box}
-        body{margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial; background:var(--bg); color:var(--text)}
-        .wrap{max-width:960px; margin:0 auto; padding:24px}
-        .card{background:var(--card); border:1px solid #1f2937; border-radius:18px; padding:18px; box-shadow:0 10px 20px rgba(0,0,0,.25)}
-        h1{margin:0 0 8px; font-size:26px}
-        p.helper{margin:0 0 16px; color:var(--muted); font-size:14px}
-        .row{display:flex; gap:10px; flex-wrap:wrap; align-items:center}
-        input[type="text"], input[type="number"], button{height:40px; border-radius:10px; border:1px solid #374151; background:#0b1220; color:var(--text); padding:0 12px}
-        input[type="number"]{width:90px}
-        button{cursor:pointer}
-        button.primary{background:#0b3b22; border-color:#1f5134}
-        button.danger{background:#3b0b0b; border-color:#512121}
-        table{width:100%; border-collapse:separate; border-spacing:0; margin-top:12px; display:block; overflow-x:auto;}
-        th,td{border-bottom:1px solid #1f2937; padding:10px; text-align:center; font-size:14px}
-        thead th{position:sticky; top:0; background:#0b1220; z-index:1}
-        tbody tr:hover{background:#0b1220}
-        /* Lignes du tableau (desktop) */
-        tbody tr {
-            transition: all 0.25s ease; /* animation hover */
-            box-shadow: 0 2px 6px rgba(0,0,0,0.08); /* ombre douce */
-            margin-bottom: 8px; /* espace entre lignes */
-            border-radius: 10px; /* coins arrondis */
-        }
-        /* Hover léger pour les lignes */
-        tbody tr:hover {
-            background: #111827;
-            transform: translateY(-2px); /* léger mouvement */
-            box-shadow: 0 6px 18px rgba(0,0,0,0.22);
-        }
-        /* Pour les cartes des plats (modal ou sections) */
-        .card, .modal-content {
-            transition: all 0.3s ease;
-        }
-        /* Animation fade-in (ajout d'un item) */
-        .fade-in {
-            animation: fadeIn 0.45s ease forwards;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-6px); }
-            to   { opacity: 1; transform: translateY(0); }
-        }
-
-        .totals{display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-top:16px}
-        .stat{background:#0b1220; border:1px solid #1f2937; border-radius:12px; padding:12px; text-align:center}
-        .stat b{display:block; font-size:18px}
-        details{margin-top:14px}
-        details summary{cursor:pointer; color:#a7f3d0}
-        .actions{display:flex; gap:10px; margin-top:20px; flex-wrap:wrap}
-        .actions button{flex:1}
-
-        .bar-container { background:#1f2937; border-radius:10px; height:20px; width:100%; margin:5px 0; overflow:hidden; position:relative; }
-        .bar {
-            height:100%;
-            border-radius:10px;
-            text-align:right;
-            padding-right:8px;
-            color:white;
-            font-size:12px;
-            transition: width 0.7s cubic-bezier(.2,.9,.2,1);
-            width:0%;
-            box-sizing:border-box;
-            white-space:nowrap;
-        }
-
-        /* Couleurs fixes par jauge (ne sont pas écrasées) */
-        .bar.prot  { background:#3b82f6; }   /* Bleu */
-        .bar.carb  { background:#f97316; }   /* Orange */
-        .bar.fat   { background:#a855f7; }   /* Violet */
-        .bar.cal   { background:#22c55e; }   /* Vert */
-
-        /* Classe 'over' : on ajoute un outline / léger effet mais on ne remplace la couleur */
-        .bar.over { box-shadow: 0 0 0 2px rgba(220,38,38,0.12); }
-
-        .modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); overflow:auto; z-index: 1000 }
-        .modal-content { background:#111827; margin:5% auto; padding:20px; width:90%; max-width:700px; border-radius:10px; color:var(--text); position : relative; z-index: 1001;}
-        .close { float:right; cursor:pointer; font-size:20px; }
-        .tabs{display:flex; gap:10px; margin-bottom:12px;}
-        .tab-btn{flex:1; padding:10px; cursor:pointer; border:none; border-radius:10px; background:#1f2937; color:var(--text)}
-        .tab-btn.active{background:var(--accent); color:#0f172a}
-
-        @media (max-width:640px){ 
-            h1{font-size:22px} 
-            input[type="number"]{width:80px} 
-            .totals{grid-template-columns:1fr;} 
-        }
-        @media (max-width:640px){
-            table, thead, tbody, th, td, tr {
-                display: block;
-            }
-            thead { display: none; }
-            tbody tr {
-                margin-bottom: 12px;
-                background: #0b1220;
-                padding: 12px;
-                border-radius: 12px;
-                box-shadow: 0 4px 8px rgba(0,0,0,0.18);
-            }
-            tbody td {
-                display: flex;
-                justify-content: space-between;
-                padding: 6px 0;
-                border: none;
-                font-size: 14px;
-            }
-            tbody td::before {
-                content: attr(data-label);
-                font-weight: bold;
-                color: var(--muted);
-                margin-right: 8px;
-            }
-        }
-    </style>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <meta charset="UTF-8">
+  <title>Gestion des Aliments et Plats</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f4f4f4; }
+    header { background: #4CAF50; color: white; padding: 10px; text-align: center; }
+    main { padding: 20px; }
+    h2 { margin-top: 30px; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 20px; background: white; }
+    th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+    th { background: #f2f2f2; }
+    .bar { height: 20px; background: #ddd; border-radius: 10px; margin: 5px 0; position: relative; }
+    .bar span { display: block; height: 100%; border-radius: 10px; }
+    .bar .label { position: absolute; width: 100%; text-align: center; top: 0; left: 0; font-size: 12px; line-height: 20px; }
+    .primary { background: #4CAF50; color: white; border: none; padding: 10px; margin: 5px; border-radius: 5px; cursor: pointer; }
+    .danger { background: #f44336; color: white; border: none; padding: 5px 10px; margin: 2px; border-radius: 5px; cursor: pointer; }
+    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); }
+    .modal-content { background: white; margin: 5% auto; padding: 20px; width: 80%; max-height: 80%; overflow-y: auto; border-radius: 10px; }
+    .close { float: right; cursor: pointer; }
+  </style>
 </head>
 <body>
-<div class="wrap">
-    <div class="card">
-        <h1>Suivi Calories & Macros</h1>
-        <p class="helper">Tout est <b>par 100 g</b>. Saisis la quantité pour chaque aliment ou plat.</p>
+  <header>
+    <h1>Gestion des Aliments et Plats</h1>
+  </header>
+  <main>
+    <h2>Aliments</h2>
+    <input id="food-search" type="text" placeholder="Rechercher un aliment...">
+    <select id="food-filter">
+      <option value="">Toutes catégories</option>
+    </select>
+    <table id="foods-table">
+      <thead>
+        <tr>
+          <th>Nom</th><th>Catégorie</th><th>Protéines</th><th>Glucides</th><th>Lipides</th><th>Calories</th><th>Quantité (g)</th><th>Actions</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
 
-        <div class="tabs">
-            <button class="tab-btn active" data-tab="ingredients">Ingrédients</button>
-            <button class="tab-btn" data-tab="plats">Plats</button>
-        </div>
+    <h2>Plats</h2>
+    <button id="btn-add-plat" class="primary" onclick="ouvrirPlatModal()">Ajouter plat</button>
+    <table id="plats-table">
+      <thead>
+        <tr>
+          <th>Nom</th><th>Ingrédients</th><th>Protéines</th><th>Glucides</th><th>Lipides</th><th>Calories</th><th>Portions</th><th>Actions</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
 
-        <div id="tab-ingredients" class="tab-content">
-            <div class="row" style="margin-bottom:8px">
-                <input id="q" type="text" placeholder="Rechercher un aliment…" />
-            </div>
-            <details>
-                <summary>➕ Ajouter un aliment personnalisé</summary>
-                <div class="row" style="margin-top:10px">
-                    <input id="f-nom" type="text" placeholder="Nom (ex: Fromage blanc 0%)" style="flex:1" />
-                    <input id="f-prot" type="number" step="0.1" placeholder="Prot /100g" />
-                    <input id="f-carb" type="number" step="0.1" placeholder="Gluc /100g" />
-                    <input id="f-fat"  type="number" step="0.1" placeholder="Lip /100g" />
-                    <input id="f-kcal" type="number" step="1"   placeholder="Kcal /100g" />
+    <h2>Totaux</h2>
+    <div id="totaux"></div>
+    <canvas id="chart" width="400" height="400"></canvas>
+  </main>
 
-                    <!-- Nouvelle liste Catégorie -->
-                    <select id="f-cat">
-                      <option value="prot">🥩 Protéine</option>
-                      <option value="carb">🍚 Glucide</option>
-                      <option value="fat">🥑 Lipide</option>
-                    </select>
-
-                    <button id="btn-add" class="primary">Ajouter</button>
-                    <button id="btn-clear-custom" class="danger">Vider persos</button>
-                </div>
-            </details>
-            <div class="row" style="margin-bottom:10px; align-items:center;">
-  <label>Filtrer par catégorie : </label>
-  <select id="filter-cat">
-    <option value="">Toutes</option>
-    <option value="prot">🥩 Protéines</option>
-    <option value="carb">🍚 Glucides</option>
-    <option value="fat">🥑 Lipides</option>
-  </select>
-</div>
-
-            <table id="tbl">
-                <thead>
-                <tr>
-                    <th style="text-align:left">Aliment</th>
-                    <th>Prot (/100g)</th>
-                    <th>Gluc (/100g)</th>
-                    <th>Lip (/100g)</th>
-                    <th>Kcal (/100g)</th>
-                    <th>Catégorie</th>
-                    <th>Quantité (g)</th>
-                    <th>Actions</th>
-                </tr>
-                </thead>
-                <tbody></tbody>
-            </table>
-        </div>
-
-        <div id="tab-plats" class="tab-content" style="display:none;">
-            <div class="row" style="margin-bottom:8px">
-                <input id="p-nom" type="text" placeholder="Nom du plat…" style="flex:1" />
-                <button id="btn-add-plat" class="primary">Ajouter plat</button>
-            </div>
-            <table id="tbl-plats">
-                <thead>
-                <tr>
-                    <th style="text-align:left">Plat</th>
-                    <th>Prot</th>
-                    <th>Gluc</th>
-                    <th>Lip</th>
-                    <th>Kcal</th>
-                    <th>Quantité (portion)</th>
-                    <th>Actions</th>
-                </tr>
-                </thead>
-                <tbody></tbody>
-            </table>
-        </div>
-
-        <div class="totals">
-            <div class="stat"><span>Protéines totales</span><b id="t-prot" data-value="0">0 g</b>
-                <div class="bar-container" onclick="ouvrirGraph('prot')"><div id="barProt" class="bar prot"></div></div></div>
-            <div class="stat"><span>Glucides totaux</span><b id="t-carb" data-value="0">0 g</b>
-                <div class="bar-container" onclick="ouvrirGraph('carb')"><div id="barCarb" class="bar carb"></div></div></div>
-            <div class="stat"><span>Lipides totaux</span><b id="t-fat" data-value="0">0 g</b>
-                <div class="bar-container" onclick="ouvrirGraph('fat')"><div id="barFat" class="bar fat"></div></div></div>
-            <div class="stat"><span>Calories totales</span><b id="t-kcal" data-value="0">0 kcal</b>
-                <div class="bar-container" onclick="ouvrirGraph('cal')"><div id="barCal" class="bar cal"></div></div></div>
-        </div>
-
-        <div class="actions">
-            <button class="primary" onclick="sauvegarderJournee()">💾 Sauvegarder la journée</button>
-            <button class="danger" onclick="nouvelleJournee()">🔄 Nouvelle journée</button>
-            <button onclick="ouvrirObjModal()">⚙️ Modifier objectifs</button>
-        </div>
+  <!-- Modal création/modification plat -->
+  <div id="modal-plat" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="fermerPlatModal()">&times;</span>
+      <h2 id="plat-title">Créer / Modifier un plat</h2>
+      <label>Nom du plat :</label>
+      <input type="text" id="p-nom"><br><br>
+      <div id="ingredients-list" style="max-height:400px;overflow:auto"></div>
+      <button id="btn-save-plat" class="primary">Enregistrer le plat</button>
     </div>
-</div>
+  </div>
 
-    <div id="modal-plat" class="modal">
-        <div class="modal-content">
-            <span class="close" onclick="document.getElementById('modal-plat').style.display='none'">&times;</span>
-            <h3>Créer un plat</h3>
-            <!-- Barre de recherche et filtre -->
-<div style="margin-bottom:8px; display:flex; gap:8px; flex-wrap:wrap;">
-  <input id="ing-search" type="text" placeholder="Rechercher un aliment…" style="flex:1"/>
-  <select id="ing-filter">
-    <option value="">Toutes</option>
-    <option value="prot">🥩 Protéines</option>
-    <option value="carb">🍚 Glucides</option>
-    <option value="fat">🥑 Lipides</option>
-  </select>
-</div>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    // --- Données locales ---
+    const LS_FOODS = "cm_foods_custom_v5";
+    const LS_PLATS = "cm_plats_v3";
+    const LS_QTY = "cm_quantities_v5";
 
-<!-- Liste des ingrédients -->
-<div id="ingredients-list" style="max-height:400px;overflow:auto"></div>
+    function getFoods(){ return JSON.parse(localStorage.getItem(LS_FOODS)) || []; }
+    function getPlats(){ return JSON.parse(localStorage.getItem(LS_PLATS)) || []; }
+    function saveFoods(v){ localStorage.setItem(LS_FOODS, JSON.stringify(v)); }
+    function savePlats(v){ localStorage.setItem(LS_PLATS, JSON.stringify(v)); }
+    function getQuantities(){ return JSON.parse(localStorage.getItem(LS_QTY)) || {}; }
+    function saveQuantities(v){ localStorage.setItem(LS_QTY, JSON.stringify(v)); }
 
-          
-            <button id="btn-save-plat" class="primary" style="margin-top:10px">Valider le plat</button>
-        </div>
-    </div>
-
-<script>
-    let allIngredients = [];
-let currentPlatIndex = null;
-let checkedMap = {}; // <-- stock global pour la modal
-
-    // --- Données ---
-    
-   
-    const LS_CUSTOM="cm_foods_custom_v5";
-const LS_QTY="cm_quantities_v5";
-const LS_PLATS="cm_plats_v3";
-const defaultAliments = [
-  { Nom:"Poulet (blanc, cuit)", Proteines:31, Glucides:0, Lipides:3.6, Calories:165, Categorie:"prot" },
-  { Nom:"Riz basmati (cuit)", Proteines:2.6, Glucides:28, Lipides:0.3, Calories:130, Categorie:"carb" },
-  { Nom:"Œuf entier", Proteines:12.6, Glucides:1.1, Lipides:9.5, Calories:143, Categorie:"prot" },
-  { Nom:"Fromage blanc 0%", Proteines:8, Glucides:4, Lipides:0.2, Calories:48, Categorie:"prot" },
-  { Nom:"Banane", Proteines:1.1, Glucides:23, Lipides:0.3, Calories:89, Categorie:"carb" },
-  { Nom:"Amandes", Proteines:21, Glucides:22, Lipides:50, Calories:579, Categorie:"fat" },
-  { Nom:"Huile d'olive", Proteines:0, Glucides:0, Lipides:100, Calories:900, Categorie:"fat" }
-];
-    let deletedDefaults = JSON.parse(localStorage.getItem("deletedDefaults") || "[]");
-
-
-
-
-/* --- objectifs utilisateur (persistés) --- */
-const LS_OBJ = "cm_objectifs_v1";
-    
-    // --- Initialisation de base ---
-if(!localStorage.getItem(LS_CUSTOM)){
-  const base = [
-    { Nom:"Poulet (blanc, cuit)", Proteines:31, Glucides:0, Lipides:3.6, Calories:165, Categorie:"prot" },
-    { Nom:"Riz basmati (cuit)", Proteines:2.6, Glucides:28, Lipides:0.3, Calories:130, Categorie:"carb" },
-    { Nom:"Œuf entier", Proteines:12.6, Glucides:1.1, Lipides:9.5, Calories:143, Categorie:"prot" },
-    { Nom:"Fromage blanc 0%", Proteines:8, Glucides:4, Lipides:0.2, Calories:48, Categorie:"prot" },
-    { Nom:"Banane", Proteines:1.1, Glucides:23, Lipides:0.3, Calories:89, Categorie:"carb" },
-    { Nom:"Amandes", Proteines:21, Glucides:22, Lipides:50, Calories:579, Categorie:"fat" },
-    { Nom:"Huile d'olive", Proteines:0, Glucides:0, Lipides:100, Calories:900, Categorie:"fat" }
-  ];
-  localStorage.setItem(LS_CUSTOM, JSON.stringify(base));
-}
-
-function getObj(){
-  return JSON.parse(localStorage.getItem(LS_OBJ)) || {prot:160, carb:220, fat:60, cal:2200};
-}
-// on initialise objectifs AVANT toute fonction qui s'en sert
-let objectifs = getObj();
-
-
-    const $q=document.getElementById("q");
-    const $tbody=document.querySelector("#tbl tbody");
-    const $tbodyPlats=document.querySelector("#tbl-plats tbody");
-
-    // --- Onglets ---
-    document.querySelectorAll(".tab-btn").forEach(btn=>{
-        btn.addEventListener("click",()=>{
-            document.querySelectorAll(".tab-btn").forEach(b=>b.classList.remove("active"));
-            btn.classList.add("active");
-            document.querySelectorAll(".tab-content").forEach(tc=>tc.style.display="none");
-            document.getElementById("tab-"+btn.dataset.tab).style.display="block";
-        });
-    });
-
-    // --- Stockage ---
-    function getFoods(){ 
-    const custom = JSON.parse(localStorage.getItem(LS_CUSTOM) || "[]");
-    const override = JSON.parse(localStorage.getItem('cm_aliments_override_v1') || '{}');
-
-    const base = defaultAliments
-        .filter(f => !deletedDefaults.includes(f.Nom)) // <-- filtrage des supprimés
-        .map(f => override[f.Nom] || f);               // <-- applique les overrides si existants
-
-    return [...base, ...custom];
-}
-
-
-
-
-    function getQuantities(){ return JSON.parse(localStorage.getItem(LS_QTY)||"{}"); }
-    function saveQuantities(q){ localStorage.setItem(LS_QTY,JSON.stringify(q)); }
-    function getPlats(){ return JSON.parse(localStorage.getItem(LS_PLATS)||"[]"); }
-    function savePlats(p){ localStorage.setItem(LS_PLATS,JSON.stringify(p)); }
-
-    // --- Render Ingrédients ---
-    function renderTable() {
-    const foods = getFoods();
-    const qmap = getQuantities();
-    const term = ($q.value||"").toLowerCase();
-    const catFilter = document.getElementById("filter-cat").value; // <--- filtre
-
-
-    $tbody.innerHTML = "";
-
-    foods.filter(f => 
-        (!term || f.Nom.toLowerCase().includes(term)) &&
-        (!catFilter || f.Categorie === catFilter) // <--- filtrage
-    ).forEach((f, index) => {
+    // --- Affichage aliments ---
+    function renderFoods(){
+      const foods = getFoods();
+      const qmap = getQuantities();
+      const tbody = document.querySelector("#foods-table tbody");
+      tbody.innerHTML = "";
+      foods.forEach((f,index)=>{
         const qty = qmap[f.Nom] || 0;
         const tr = document.createElement("tr");
         tr.innerHTML = `
-            <td data-label="Aliment" style="text-align:left">${f.Nom}</td>
-            <td data-label="Prot (/100g)">${f.Proteines}</td>
-            <td data-label="Gluc (/100g)">${f.Glucides}</td>
-            <td data-label="Lip (/100g)">${f.Lipides}</td>
-            <td data-label="Kcal (/100g)">${f.Calories}</td>
-            <td data-label="Catégorie">
-                <span class="cat-icon cat-${f.Categorie}">
-                  ${getCatIcon(f.Categorie)} ${f.Categorie}
-                </span>
-            </td>
-            <td data-label="Quantité (g)">
-                <input class="qty-inp" type="number" min="0" step="1" value="${qty}" data-name="${f.Nom}">
-            </td>
-            <td data-label="Actions">
-                <button onclick="modifierAliment(${index})">✏️</button>
-                <button onclick="supprimerAliment(${index})">❌</button>
-            </td>
-        `;
-        tr.classList.add("fade-in");
-        $tbody.appendChild(tr);
-    });
-
-    // Attacher les événements aux inputs fraîchement créés
-    $tbody.querySelectorAll(".qty-inp").forEach(inp=>{
-        inp.addEventListener("input",()=>{
-            const map = getQuantities();
-            map[inp.dataset.name] = Math.max(0, Number(inp.value || 0));
-            saveQuantities(map);
-            computeTotals();
-        });
-    });
-
-    computeTotals();
-}
-
-
-    // --- Render Plats ---
-    function renderPlats(){
-        $tbodyPlats.innerHTML="";
-        getPlats().forEach((p,index)=>{
-            const tr=document.createElement("tr");
-            tr.innerHTML = `
-      <td data-label="Plat" style="text-align:left">${p.Nom}</td>
-      <td data-label="Prot">${p.totalProt.toFixed(1)}</td>
-      <td data-label="Gluc">${p.totalCarb.toFixed(1)}</td>
-      <td data-label="Lip">${p.totalFat.toFixed(1)}</td>
-      <td data-label="Kcal">${p.totalCal.toFixed(1)}</td>
-      <td data-label="Portions">
-          <input class="plat-inp" type="number" min="0" step="1" value="0" data-index="${index}">
-      </td>
-      <td data-label="Actions">
-          <button onclick="modifierPlat(${index})">✏️</button>
-          <button onclick="supprimerPlat(${index})">❌</button>
-      </td>
-    `;
-            tr.classList.add("fade-in");
-            $tbodyPlats.appendChild(tr);
-        });
-
-        $tbodyPlats.querySelectorAll('.plat-inp').forEach(inp=>{
-            inp.addEventListener("input",()=>{ computeTotals(); });
-        });
-    }
-
-    // --- Supprimer / Modifier aliments ---
-   function modifierAliment(index) {
-    const foods = getFoods();
-    if(index<0||index>=foods.length) return;
-    const aliment = foods[index];
-    const newNom = prompt("Nom de l’aliment :", aliment.Nom);
-    if(!newNom) return;  // si annule, on sort
-    const prot = parseFloat(prompt("Protéines /100g :", aliment.Proteines));
-    const carb = parseFloat(prompt("Glucides /100g :", aliment.Glucides));
-    const fat  = parseFloat(prompt("Lipides /100g :", aliment.Lipides));
-    const cal  = parseFloat(prompt("Calories /100g :", aliment.Calories));
-    if([prot,carb,fat,cal].some(v => Number.isNaN(v))) return;
-
-    const defaultLen = defaultAliments.length;
-    if(index>=defaultLen){
-        // custom
-        const custom = JSON.parse(localStorage.getItem(LS_CUSTOM)||'[]');
-        custom[index-defaultLen] = { Nom:newNom, Proteines:prot, Glucides:carb, Lipides:fat, Calories:cal, Categorie: (custom[index-defaultLen] && custom[index-defaultLen].Categorie) ? custom[index-defaultLen].Categorie : "prot" };
-        localStorage.setItem(LS_CUSTOM, JSON.stringify(custom));
-    } else {
-        // override
-        const override = JSON.parse(localStorage.getItem('cm_aliments_override_v1')||'{}');
-        override[aliment.Nom] = { Nom:newNom, Proteines:prot, Glucides:carb, Lipides:fat, Calories:cal, Categorie: "prot" };
-        localStorage.setItem('cm_aliments_override_v1', JSON.stringify(override));
-    }
-
-    // ✅ Mettre à jour les plats qui contiennent cet aliment
-    const plats = getPlats().map(plat => {
-        let updated = false;
-        plat.ingredients.forEach(ing => {
-            if(ing.Nom === aliment.Nom){
-                ing.Nom = newNom;
-                ing.Proteines = prot;
-                ing.Glucides  = carb;
-                ing.Lipides   = fat;
-                ing.Calories  = cal;
-                updated = true;
-            }
-        });
-        if(updated){
-            let totalProt=0, totalCarb=0, totalFat=0, totalCal=0;
-            plat.ingredients.forEach(i=>{
-                const ratio = i.Quantite/100;
-                totalProt += i.Proteines*ratio;
-                totalCarb += i.Glucides*ratio;
-                totalFat  += i.Lipides*ratio;
-                totalCal  += i.Calories*ratio;
-            });
-            plat.totalProt = totalProt;
-            plat.totalCarb = totalCarb;
-            plat.totalFat  = totalFat;
-            plat.totalCal  = totalCal;
-        }
-        return plat;
-    });
-    localStorage.setItem(LS_PLATS, JSON.stringify(plats));
-
-    renderTable();
-    renderPlats();
-    computeTotals();
-}
-
-
-    function supprimerAliment(index){
-    const foods = getFoods();
-    if(index<0||index>=foods.length) return;
-    if(!confirm("Supprimer cet aliment ?")) return;
-
-    const defaultLen = defaultAliments.filter(f => !deletedDefaults.includes(f.Nom)).length;
-    const name = foods[index].Nom;
-
-    if(index >= defaultLen){
-        // Aliments personnalisés
-        let custom = JSON.parse(localStorage.getItem(LS_CUSTOM)||'[]');
-        custom.splice(index - defaultLen, 1);
-        localStorage.setItem(LS_CUSTOM, JSON.stringify(custom));
-    } else {
-        // Aliments par défaut : ajouter à deletedDefaults
-        deletedDefaults.push(name);
-        localStorage.setItem("deletedDefaults", JSON.stringify(deletedDefaults));
-
-        // Supprime l’override si présent
-        let override = JSON.parse(localStorage.getItem('cm_aliments_override_v1')||'{}');
-        if(override[name]) delete override[name];
-        localStorage.setItem('cm_aliments_override_v1', JSON.stringify(override));
-    }
-
-    // Supprime quantité si existante
-    const qmap = getQuantities();
-    if(qmap.hasOwnProperty(name)){ delete qmap[name]; saveQuantities(qmap); }
-
-    renderTable();
-}
-
-
-    // Ouvrir modal pour modifier
-function modifierPlat(index){
-    const plats = getPlats();
-    const plat = plats[index];
-    document.getElementById("modal-plat").style.display="block";
-    document.getElementById("p-nom").value = plat.Nom;
-    document.getElementById("modal-plat").dataset.editIndex = index; // <-- stock index
-
-    const list=document.getElementById("ingredients-list");
-    list.innerHTML="";
-    getFoods().forEach((i,idx)=>{
-        const existing = plat.ingredients.find(ing => ing.Nom===i.Nom);
-        const checked = existing ? "checked" : "";
-        const qtyVal = existing ? existing.Quantite : "";
-        const div=document.createElement("div");
-        div.className="row";
-        div.innerHTML=`<input type="checkbox" data-index="${idx}" ${checked}/> ${i.Nom}
-<input type="number" placeholder="g" style="width:60px" data-index="${idx}" value="${qtyVal}">`;
-        list.appendChild(div);
-    });
-}
-
-
-        // Quand on clique sur "Valider"
-       document.getElementById("btn-save-plat").addEventListener("click",()=>{
-    const nom=document.getElementById("p-nom").value.trim();
-    if(!nom){alert("Nom du plat requis"); return;}
-
-    const checkboxes=document.querySelectorAll("#ingredients-list input[type=checkbox]");
-    let ingredients=[];
-    checkboxes.forEach(cb=>{
-        if(cb.checked){
-            const idx = parseInt(cb.dataset.index);
-            const qtyInput = document.querySelector(`#ingredients-list input[type=number][data-index='${idx}']`);
-            const qty = parseFloat(qtyInput.value) || 0;
-            if(qty > 0){
-                const f = getFoods()[idx];
-                ingredients.push({Nom: f.Nom, Proteines: f.Proteines, Glucides: f.Glucides, Lipides: f.Lipides, Calories: f.Calories, Quantite: qty});
-            }
-        }
-    });
-
-    let totalProt=0, totalCarb=0, totalFat=0, totalCal=0;
-    ingredients.forEach(i=>{
-        const ratio = i.Quantite/100;
-        totalProt += i.Proteines*ratio;
-        totalCarb += i.Glucides*ratio;
-        totalFat  += i.Lipides*ratio;
-        totalCal  += i.Calories*ratio;
-    });
-
-    let plats = getPlats();
-    const editIndex = document.getElementById("modal-plat").dataset.editIndex;
-    if(editIndex !== undefined && editIndex !== ""){
-        // Modifier plat existant
-        plats[editIndex] = {Nom: nom, ingredients, totalProt, totalCarb, totalFat, totalCal};
-    } else {
-        // Nouveau plat
-        plats.push({Nom: nom, ingredients, totalProt, totalCarb, totalFat, totalCal});
-    }
-
-    localStorage.setItem(LS_PLATS, JSON.stringify(plats));
-    document.getElementById('modal-plat').style.display='none';
-    document.getElementById("p-nom").value="";
-    delete document.getElementById("modal-plat").dataset.editIndex;
-
-    renderPlats();
-    computeTotals();
-});
-
-
-    function supprimerPlat(index){
-        if(!confirm("Supprimer ce plat ?")) return;
-        let plats = getPlats();
-        plats.splice(index,1);
-        savePlats(plats);
-        renderPlats();
-    }
-
-    // --- Ajouter Aliment ---
-    document.getElementById("btn-add").addEventListener("click",()=>{
-        const nom=document.getElementById("f-nom").value.trim();
-        const prot=parseFloat(document.getElementById("f-prot").value);
-        const carb=parseFloat(document.getElementById("f-carb").value);
-        const fat=parseFloat(document.getElementById("f-fat").value);
-        const kcal=parseFloat(document.getElementById("f-kcal").value);
-        const cat=document.getElementById("f-cat").value || "prot"; // Nouvelle catégorie
-
-        if(!nom||[prot,carb,fat,kcal].some(v=>isNaN(v))){
-            alert("Complète tous les champs");
-            return;
-        }
-
-        const custom=JSON.parse(localStorage.getItem(LS_CUSTOM)||"[]");
-        custom.push({Nom:nom,Proteines:prot,Glucides:carb,Lipides:fat,Calories:kcal,Categorie:cat});
-        localStorage.setItem(LS_CUSTOM,JSON.stringify(custom));
-
-        ["f-nom","f-prot","f-carb","f-fat","f-kcal"].forEach(id=>document.getElementById(id).value="");
-        document.getElementById("f-cat").value="prot"; // reset la liste
-
-        renderTable();
-    });
-
-    document.getElementById("btn-clear-custom").addEventListener("click",()=>{
-        if(confirm("Supprimer tous tes aliments personnalisés ?")){
-            localStorage.removeItem(LS_CUSTOM);
-            renderTable();
-        }
-    });
-
-    // --- Ajouter Plat (nouveau) ---
-    document.getElementById("btn-add-plat").addEventListener("click",()=>{
-    allIngredients = getFoods().map(f => ({...f})); // <-- ajouter
-    currentPlatIndex = null; // nouveau plat
-    document.getElementById("p-nom").value = "";
-
-    const list=document.getElementById("ingredients-list");
-    list.innerHTML="";
-    renderIngredientsList({}); // aucun ingrédient coché pour le moment
-
-    // Réinitialiser recherche et filtre
-    document.getElementById("ing-search").value="";
-    document.getElementById("ing-filter").value="";
-
-    document.getElementById("modal-plat").style.display="block";
-});
-
-
-    // ----- BARRE et TOTALS -----
-    function majBarre(id, valeur, objectif) {
-        const bar = document.getElementById(id);
-        // protect if objective is zero
-        const ratioPct = objectif > 0 ? (valeur / objectif) * 100 : 0;
-        const widthPct = Math.max(0, Math.min(100, ratioPct)); // clamp 0..100
-        bar.style.width = widthPct + "%";
-        // Affiche % réel (possible >100 arrondi) mais largeur limitée à 100%
-        const displayPct = Math.round(ratioPct);
-        bar.textContent = displayPct + "%";
-
-        // conserve les classes couleur et ajoute uniquement 'over' si besoin
-        bar.classList.remove("over");
-        // ensure the base class 'bar' remains
-        if(!bar.classList.contains('bar')) bar.classList.add('bar');
-        // assign color classes based on id
-        bar.classList.remove('prot','carb','fat','cal');
-        if(id === "barProt") bar.classList.add("prot");
-        if(id === "barCarb") bar.classList.add("carb");
-        if(id === "barFat")  bar.classList.add("fat");
-        if(id === "barCal")  bar.classList.add("cal");
-
-        if(valeur > objectif) {
-            bar.classList.add("over");
-        } else {
-            bar.classList.remove("over");
-        }
-    }
-
-    function computeTotals() {
-        const foods = getFoods();
-        const qmap = getQuantities();
-        let p=0,c=0,f=0,k=0;
-
-        // Ingrédients
-        foods.forEach(item => {
-            const q = qmap[item.Nom] || 0;
-            const ratio = q/100;
-            p += (item.Proteines || 0) * ratio;
-            c += (item.Glucides || 0) * ratio;
-            f += (item.Lipides || 0) * ratio;
-            k += (item.Calories || 0) * ratio;
-        });
-
-        // Plats (par portion)
-        const plats = getPlats();
-        // si aucun plat, $tbodyPlats peut être vide
-        $tbodyPlats.querySelectorAll('input[type="number"]').forEach((inp,i)=>{
-            const qty = parseFloat(inp.value)||0;
-            if(qty>0 && plats[i]){
-                const plat = plats[i];
-                p += (plat.totalProt || 0) * qty;
-                c += (plat.totalCarb || 0) * qty;
-                f += (plat.totalFat || 0) * qty;
-                k += (plat.totalCal || 0) * qty;
-            }
-        });
-
-        // Mise à jour affichage + dataset (pour sauvegarde fiable)
-        document.getElementById("t-prot").dataset.value = p;
-        document.getElementById("t-carb").dataset.value = c;
-        document.getElementById("t-fat").dataset.value = f;
-        document.getElementById("t-kcal").dataset.value = k;
-
-        document.getElementById("t-prot").textContent = p.toFixed(1) + " g";
-        document.getElementById("t-carb").textContent = c.toFixed(1) + " g";
-        document.getElementById("t-fat").textContent  = f.toFixed(1) + " g";
-        document.getElementById("t-kcal").textContent = Math.round(k) + " kcal";
-
-        majBarre("barProt", p, objectifs.prot);
-        majBarre("barCarb", c, objectifs.carb);
-        majBarre("barFat", f, objectifs.fat);
-        majBarre("barCal", k, objectifs.cal);
-    }
-
-    // Sauvegarde correcte avec valeurs numériques
-    function sauvegarderJournee(){
-        let data=JSON.parse(localStorage.getItem("historique")||"{}");
-        let today=new Date().toISOString().slice(0,10);
-        data[today]={
-            prot: parseFloat(document.getElementById("t-prot").dataset.value || 0),
-            carb: parseFloat(document.getElementById("t-carb").dataset.value || 0),
-            fat:  parseFloat(document.getElementById("t-fat").dataset.value || 0),
-            cal:  parseFloat(document.getElementById("t-kcal").dataset.value || 0)
+          <td>${f.Nom}</td>
+          <td>${f.Categorie||""}</td>
+          <td>${f.Proteines}</td>
+          <td>${f.Glucides}</td>
+          <td>${f.Lipides}</td>
+          <td>${f.Calories}</td>
+          <td><input class="qty-inp" type="number" min="0" step="1" value="${qty}" data-name="${f.Nom}"></td>
+          <td><button class="danger" onclick="supprimerAliment('${f.Nom}')">🗑️</button></td>`;
+        tbody.appendChild(tr);
+      });
+      document.querySelectorAll(".qty-inp").forEach(inp=>{
+        inp.oninput = ()=>{
+          const q = getQuantities();
+          q[inp.dataset.name] = parseFloat(inp.value)||0;
+          saveQuantities(q);
+          computeTotals();
         };
-        localStorage.setItem("historique",JSON.stringify(data));
-        alert("Journée sauvegardée !");
+      });
     }
 
-    function getCatIcon(cat){
-        switch(cat){
-            case "prot": return "🥩";
-            case "carb": return "🍚";
-            case "fat":  return "🥑";
-            default: return "❓";
-        }
+    function supprimerAliment(nom){
+      let foods = getFoods().filter(f=>f.Nom!==nom);
+      saveFoods(foods);
+      renderFoods(); computeTotals();
     }
 
-    function nouvelleJournee(){
-        sauvegarderJournee();
-        localStorage.removeItem(LS_QTY);
-        renderTable();
-        renderPlats();
-        alert("Nouvelle journée commencée !");
-    }
+    // --- Gestion plats ---
+    let currentPlatIndex = null;
+    let checkedMap = {};
+    let allIngredients = [];
 
-    // --- Graphiques ---
-    let chart;
-    function ouvrirGraph(type){
-        const modal=document.getElementById("graphModal");
-        modal.style.display="block";
-        let data=JSON.parse(localStorage.getItem("historique")||"{}");
-        let jours=[],valeurs=[],objectif=objectifs[type];
-        for(let i=6;i>=0;i--){
-            let d=new Date();
-            d.setDate(d.getDate()-i);
-            let key=d.toISOString().slice(0,10);
-            jours.push(i);
-            valeurs.push(data[key]?data[key][type]:0);
-        }
-        if(chart) chart.destroy();
-        const ctx=document.getElementById("graphCanvas").getContext("2d");
-        chart=new Chart(ctx,{
-            type:"line",
-            data:{labels:jours,datasets:[
-                    {label:"Objectif",data:new Array(7).fill(objectif),borderColor:"red",borderDash:[5,5],fill:false},
-                    {label:"Réel",data:valeurs,borderColor:"blue",fill:false}
-                ]},
-            options:{responsive:true,scales:{x:{title:{display:true,text:"Jours (6 = il y a 6 jours ... 0 = aujourd'hui)"}},y:{beginAtZero:true}}}
-        });
-    }
-    function fermerGraph(){document.getElementById("graphModal").style.display="none";}
+    function ouvrirPlatModal(index=null){
+      currentPlatIndex = index;
+      const nomInput = document.getElementById("p-nom");
+      const foods = getFoods();
+      allIngredients = foods.map(f=>({...f}));
+      checkedMap = {};
 
-    // --- Init: charger plats / custom foods from localStorage if absent create defaults ---
-    // (no destructive actions)
-    if(!localStorage.getItem(LS_CUSTOM)) localStorage.setItem(LS_CUSTOM, JSON.stringify([]));
-    if(!localStorage.getItem(LS_PLATS)) localStorage.setItem(LS_PLATS, JSON.stringify([]));
-    if(!localStorage.getItem(LS_QTY)) localStorage.setItem(LS_QTY, JSON.stringify({}));
-
-    // Listeners
-    $q.addEventListener("input",renderTable);
-    // Filtre par catégorie
-document.getElementById("filter-cat").addEventListener("change", renderTable);
-
-
-    // Render initial
-    renderTable();
-    renderPlats();
-    
-
-// Ouvrir la modal
-function ouvrirObjModal(){
-  const obj = getObj();
-  document.getElementById("obj-prot").value = obj.prot;
-  document.getElementById("obj-carb").value = obj.carb;
-  document.getElementById("obj-fat").value = obj.fat;
-  document.getElementById("obj-cal").value = obj.cal;
-  document.getElementById("objModal").style.display="block";
-}
-// --- Variables globales pour la modal plat ---
-// --- Variables globales pour la modal plat ---
-// --- Variables globales ---
-let allIngredients = []; 
-let currentPlatIndex = null; 
-let checkedMap = {}; // map Nom -> Quantité
-
-// --- Ouvrir modal plat (ajout ou modification) ---
-function ouvrirPlatModal(index = null){
-    currentPlatIndex = index;
-    const nomInput = document.getElementById("p-nom");
-    const foods = getFoods();
-    allIngredients = foods.map(f => ({...f}));
-    checkedMap = {};
-
-    if(index !== null){
+      if(index !== null){
         const plat = getPlats()[index];
         nomInput.value = plat.Nom;
         plat.ingredients.forEach(i => { checkedMap[i.Nom] = i.Quantite; });
-    } else {
+      } else {
         nomInput.value = "";
+      }
+      renderIngredientsList();
+      document.getElementById("modal-plat").style.display = "block";
     }
 
-    document.getElementById("ing-search").value = "";
-    document.getElementById("ing-filter").value = "";
+    function fermerPlatModal(){
+      document.getElementById("modal-plat").style.display = "none";
+    }
 
-    renderIngredientsList();
-
-    document.getElementById("ing-search").oninput = renderIngredientsList;
-    document.getElementById("ing-filter").onchange = renderIngredientsList;
-
-    document.getElementById("modal-plat").style.display = "block";
-}
-
-// --- Rendu ingrédients avec recherche & filtre ---
-function renderIngredientsList(){
-    const list = document.getElementById("ingredients-list");
-    const searchTerm = document.getElementById("ing-search").value.toLowerCase();
-    const catFilter = document.getElementById("ing-filter").value;
-
-    // MàJ checkedMap avant rerender
-    document.querySelectorAll("#ingredients-list .row").forEach(row=>{
-        const cb = row.querySelector("input[type=checkbox]");
-        const qtyInput = row.querySelector("input[type=number]");
-        const nom = allIngredients[parseInt(cb.dataset.index)].Nom;
-        if(cb.checked && qtyInput.value){
-            checkedMap[nom] = parseFloat(qtyInput.value);
-        } else {
-            delete checkedMap[nom];
-        }
-    });
-
-    list.innerHTML = "";
-
-    allIngredients.forEach((f, idx)=>{
-        if(searchTerm && !f.Nom.toLowerCase().includes(searchTerm)) return;
-        if(catFilter && f.Categorie !== catFilter) return;
-
+    function renderIngredientsList(){
+      const div = document.getElementById("ingredients-list");
+      div.innerHTML = "";
+      allIngredients.forEach((f,idx)=>{
+        const row = document.createElement("div");
+        row.className = "row";
         const checked = checkedMap[f.Nom] ? "checked" : "";
-        const qtyVal = checkedMap[f.Nom] || "";
-
-        const div = document.createElement("div");
-        div.className = "row";
-        div.innerHTML = `
-            <input type="checkbox" data-index="${idx}" ${checked}/> ${f.Nom}
-            <input type="number" placeholder="g" style="width:60px" data-index="${idx}" value="${qtyVal}">
+        const val = checkedMap[f.Nom] || "";
+        row.innerHTML = `
+          <label><input type="checkbox" data-index="${idx}" ${checked}> ${f.Nom} (${f.Categorie||""})</label>
+          <input type="number" min="0" step="1" value="${val}" style="width:80px"> g
         `;
-        list.appendChild(div);
+        div.appendChild(row);
+      });
+      div.querySelectorAll("input[type=checkbox]").forEach(cb=>{
+        cb.onchange = ()=>{
+          const nom = allIngredients[parseInt(cb.dataset.index)].Nom;
+          if(cb.checked){
+            checkedMap[nom] = 100;
+            renderIngredientsList();
+          } else {
+            delete checkedMap[nom];
+            renderIngredientsList();
+          }
+        };
+      });
+      div.querySelectorAll("input[type=number]").forEach((inp,i)=>{
+        inp.oninput = ()=>{
+          const nom = allIngredients[i].Nom;
+          if(checkedMap[nom]!==undefined){
+            checkedMap[nom] = parseFloat(inp.value)||0;
+          }
+        };
+      });
+    }
 
-        const cb = div.querySelector("input[type=checkbox]");
-        const qtyInput = div.querySelector("input[type=number]");
-        cb.addEventListener("change", ()=>{
-            if(cb.checked && qtyInput.value){
-                checkedMap[f.Nom] = parseFloat(qtyInput.value);
-            } else {
-                delete checkedMap[f.Nom];
-            }
-        });
-        qtyInput.addEventListener("input", ()=>{
-            if(cb.checked && qtyInput.value){
-                checkedMap[f.Nom] = parseFloat(qtyInput.value);
-            } else if(cb.checked){
-                delete checkedMap[f.Nom];
-            }
-        });
-    });
-}
-
-// --- Sauvegarde plat ---
-document.getElementById("btn-save-plat").onclick = ()=>{
-    const nom = document.getElementById("p-nom").value.trim();
-    if(!nom){ alert("Nom du plat requis"); return; }
-
-    const ingredients = [];
-    for(let nomIng in checkedMap){
-        const qty = checkedMap[nomIng];
-        if(qty > 0){
-            const f = allIngredients.find(f => f.Nom === nomIng);
-            ingredients.push({
-                Nom: f.Nom, Proteines: f.Proteines, Glucides: f.Glucides, 
-                Lipides: f.Lipides, Calories: f.Calories, Quantite: qty
-            });
+    document.getElementById("btn-save-plat").onclick = ()=>{
+      const nom = document.getElementById("p-nom").value.trim();
+      if(!nom){ alert("Aucun nom renseigné"); return; }
+      const ingredients = [];
+      for(const nomIng in checkedMap){
+        const ing = allIngredients.find(f=>f.Nom===nomIng);
+        if(ing){
+          const qty = checkedMap[nomIng];
+          const ratio = qty/100;
+          ingredients.push({
+            Nom: ing.Nom,
+            Quantite: qty,
+            Proteines: ing.Proteines*ratio,
+            Glucides: ing.Glucides*ratio,
+            Lipides: ing.Lipides*ratio,
+            Calories: ing.Calories*ratio
+          });
         }
+      }
+      const totalProt = ingredients.reduce((s,i)=>s+i.Proteines,0);
+      const totalCarb = ingredients.reduce((s,i)=>s+i.Glucides,0);
+      const totalFat = ingredients.reduce((s,i)=>s+i.Lipides,0);
+      const totalCal = ingredients.reduce((s,i)=>s+i.Calories,0);
+      const newPlat = {Nom:nom, ingredients, totalProt,totalCarb,totalFat,totalCal};
+
+      let plats = getPlats();
+      if(currentPlatIndex!==null){ plats[currentPlatIndex] = newPlat; }
+      else plats.push(newPlat);
+      savePlats(plats);
+      fermerPlatModal(); renderPlats(); computeTotals();
+    };
+
+    function renderPlats(){
+      const plats = getPlats();
+      const tbody = document.querySelector("#plats-table tbody");
+      tbody.innerHTML = "";
+      plats.forEach((p,index)=>{
+        const ingList = p.ingredients.map(i=>`${i.Nom}(${i.Quantite}g)`).join(", ");
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${p.Nom}</td>
+          <td>${ingList}</td>
+          <td>${p.totalProt.toFixed(1)}</td>
+          <td>${p.totalCarb.toFixed(1)}</td>
+          <td>${p.totalFat.toFixed(1)}</td>
+          <td>${p.totalCal.toFixed(1)}</td>
+          <td><input class="plat-inp" type="number" min="0" step="1" value="0" data-index="${index}"></td>
+          <td>
+            <button onclick="ouvrirPlatModal(${index})">✏️</button>
+            <button class="danger" onclick="supprimerPlat(${index})">🗑️</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+      document.querySelectorAll(".plat-inp").forEach(inp=>{
+        inp.oninput = computeTotals;
+      });
     }
 
-    let totalProt=0, totalCarb=0, totalFat=0, totalCal=0;
-    ingredients.forEach(i=>{
-        const ratio = i.Quantite / 100;
-        totalProt += i.Proteines*ratio;
-        totalCarb += i.Glucides*ratio;
-        totalFat  += i.Lipides*ratio;
-        totalCal  += i.Calories*ratio;
-    });
-
-    let plats = getPlats();
-    if(currentPlatIndex !== null){
-        plats[currentPlatIndex] = {Nom: nom, ingredients, totalProt, totalCarb, totalFat, totalCal};
-    } else {
-        plats.push({Nom: nom, ingredients, totalProt, totalCarb, totalFat, totalCal});
+    function supprimerPlat(i){
+      let plats = getPlats();
+      plats.splice(i,1);
+      savePlats(plats);
+      renderPlats(); computeTotals();
     }
 
-    savePlats(plats);
-    document.getElementById("modal-plat").style.display='none';
+    // --- Totaux & graphique ---
+    let chart;
+    function computeTotals(){
+      const qmap = getQuantities();
+      const foods = getFoods();
+      let p=0,c=0,f=0,k=0;
+      foods.forEach(fa=>{
+        const qty = qmap[fa.Nom]||0;
+        if(qty>0){
+          const ratio = qty/100;
+          p += fa.Proteines*ratio;
+          c += fa.Glucides*ratio;
+          f += fa.Lipides*ratio;
+          k += fa.Calories*ratio;
+        }
+      });
+      const plats = getPlats();
+      document.querySelectorAll(".plat-inp").forEach(inp=>{
+        const qty = parseFloat(inp.value)||0;
+        const idx = parseInt(inp.dataset.index);
+        if(qty>0 && plats[idx]){
+          const plat = plats[idx];
+          p += plat.totalProt*qty;
+          c += plat.totalCarb*qty;
+          f += plat.totalFat*qty;
+          k += plat.totalCal*qty;
+        }
+      });
+      const div = document.getElementById("totaux");
+      div.innerHTML = `
+        <div class="bar"><span style="width:${Math.min(p/160*100,100)}%;background:#4CAF50"></span><div class="label">Prot: ${p.toFixed(1)} / 160g</div></div>
+        <div class="bar"><span style="width:${Math.min(c/220*100,100)}%;background:#2196F3"></span><div class="label">Glucides: ${c.toFixed(1)} / 220g</div></div>
+        <div class="bar"><span style="width:${Math.min(f/60*100,100)}%;background:#FF9800"></span><div class="label">Lipides: ${f.toFixed(1)} / 60g</div></div>
+        <div class="bar"><span style="width:${Math.min(k/2200*100,100)}%;background:#9C27B0"></span><div class="label">Calories: ${k.toFixed(0)} / 2200</div></div>
+      `;
+      if(chart){ chart.destroy(); }
+      const ctx = document.getElementById("chart").getContext("2d");
+      chart = new Chart(ctx,{
+        type:"pie",
+        data:{
+          labels:["Protéines","Glucides","Lipides"],
+          datasets:[{data:[p*4,c*4,f*9],backgroundColor:["#4CAF50","#2196F3","#FF9800"]}]
+        }
+      });
+    }
+
+    // --- Init ---
+    renderFoods();
     renderPlats();
     computeTotals();
-};
-
-
-
-// Fermer la modal
-function fermerObjModal(){
-  document.getElementById("objModal").style.display="none";
-}
-
-// Sauvegarder les nouveaux objectifs
-function sauverObj(){
-  const prot = parseFloat(document.getElementById("obj-prot").value) || 0;
-  const carb = parseFloat(document.getElementById("obj-carb").value) || 0;
-  const fat  = parseFloat(document.getElementById("obj-fat").value)  || 0;
-  const cal  = parseFloat(document.getElementById("obj-cal").value)  || 0;
-
-  const newObj = {prot, carb, fat, cal};
-  localStorage.setItem(LS_OBJ, JSON.stringify(newObj));
-  objectifs = newObj;
-
-  fermerObjModal();
-  computeTotals(); // recalcul avec les nouveaux objectifs
-  alert("Objectifs mis à jour !");
-}
-
-</script>
-
-<!-- Modal graphique -->
-<div id="graphModal" class="modal">
-    <div class="modal-content">
-        <span class="close" onclick="fermerGraph()">&times;</span>
-        <canvas id="graphCanvas"></canvas>
-    </div>
-</div>
-<div id="objModal" class="modal">
-  <div class="modal-content">
-    <span class="close" onclick="fermerObjModal()">&times;</span>
-    <h3>Modifier mes objectifs</h3>
-    <div class="row" style="flex-direction:column; gap:8px; margin-top:10px">
-      <label>Protéines (g) <input type="number" id="obj-prot"></label>
-      <label>Glucides (g) <input type="number" id="obj-carb"></label>
-      <label>Lipides (g) <input type="number" id="obj-fat"></label>
-      <label>Calories (kcal) <input type="number" id="obj-cal"></label>
-    </div>
-    <button class="primary" style="margin-top:12px" onclick="sauverObj()">✅ Sauvegarder</button>
-  </div>
-</div>
-
+  </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
