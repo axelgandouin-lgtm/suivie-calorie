@@ -467,26 +467,31 @@ let objectifs = getObj();
             return;
         }
 
-        // 🔹 Vérification doublon
+        // Vérification doublon
         if (newNom.toLowerCase() !== aliment.Nom.toLowerCase() &&
             getFoods().some(f => f.Nom.toLowerCase() === newNom.toLowerCase())) {
             alert("Un aliment avec ce nom existe déjà !");
             return;
         }
 
-        // Mettre à jour l'aliment
-        const defaultLen = defaultAliments.length;
-        if (index >= defaultLen) {
-            const custom = JSON.parse(localStorage.getItem(LS_CUSTOM) || '[]');
-            custom[index - defaultLen] = { Nom: newNom, Proteines: prot, Glucides: carb, Lipides: fat, Calories: cal, Categorie: cat };
-            localStorage.setItem(LS_CUSTOM, JSON.stringify(custom));
-        } else {
+        // Déterminer si c'est un aliment par défaut ou personnalisé
+        const visibleDefaults = defaultAliments.filter(f => !deletedDefaults.includes(f.Nom));
+        if (visibleDefaults.some(f => f.Nom === aliment.Nom)) {
+            // Aliments par défaut → override
             const override = JSON.parse(localStorage.getItem('cm_aliments_override_v1') || '{}');
             override[aliment.Nom] = { Nom: newNom, Proteines: prot, Glucides: carb, Lipides: fat, Calories: cal, Categorie: cat };
             localStorage.setItem('cm_aliments_override_v1', JSON.stringify(override));
+        } else {
+            // Aliments personnalisés
+            const custom = JSON.parse(localStorage.getItem(LS_CUSTOM) || '[]');
+            const customIndex = foods.slice(visibleDefaults.length).findIndex(f => f.Nom === aliment.Nom);
+            if(customIndex >= 0){
+                custom[customIndex] = { Nom: newNom, Proteines: prot, Glucides: carb, Lipides: fat, Calories: cal, Categorie: cat };
+                localStorage.setItem(LS_CUSTOM, JSON.stringify(custom));
+            }
         }
 
-        // Mettre à jour les plats
+        // Mettre à jour les plats si l'aliment est utilisé
         const plats = getPlats().map(plat => {
             let updated = false;
             plat.ingredients.forEach(ing => {
@@ -501,7 +506,6 @@ let objectifs = getObj();
                     updated = true;
                 }
             });
-
             if(updated){
                 let totalProt=0, totalCarb=0, totalFat=0, totalCal=0;
                 plat.ingredients.forEach(i=>{
@@ -524,7 +528,6 @@ let objectifs = getObj();
         renderTable();
         renderPlats();
         computeTotals();
-
         document.body.removeChild(modal);
     };
 }
@@ -949,6 +952,7 @@ function sauverObj(){
 
 </body>
 </html>
+
 
 
 
