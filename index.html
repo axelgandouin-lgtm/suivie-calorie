@@ -481,33 +481,40 @@ let objectifs = getObj();
 
         // Mettre à jour les plats
         const plats = getPlats().map(plat => {
-            let updated = false;
-            plat.ingredients.forEach(ing => {
-                if (ing.Nom === aliment.Nom) {
-                    ing.Nom = newNom;
-                    ing.Proteines = prot;
-                    ing.Glucides = carb;
-                    ing.Lipides = fat;
-                    ing.Calories = cal;
-                    updated = true;
-                }
-            });
-            if (updated) {
-                let totalProt=0, totalCarb=0, totalFat=0, totalCal=0;
-                plat.ingredients.forEach(i => {
-                    const ratio = i.Quantite/100;
-                    totalProt += i.Proteines*ratio;
-                    totalCarb += i.Glucides*ratio;
-                    totalFat  += i.Lipides*ratio;
-                    totalCal  += i.Calories*ratio;
-                });
-                plat.totalProt = totalProt;
-                plat.totalCarb = totalCarb;
-                plat.totalFat  = totalFat;
-                plat.totalCal  = totalCal;
-            }
-            return plat;
+    let updated = false;
+    plat.ingredients.forEach(ing => {
+        if(ing.Nom === aliment.Nom){
+            // conserver la quantité existante
+            const qty = ing.Quantite;
+
+            ing.Nom = newNom;
+            ing.Proteines = prot;
+            ing.Glucides  = carb;
+            ing.Lipides   = fat;
+            ing.Calories  = cal;
+            ing.Quantite  = qty; // <-- conserve la quantité
+            updated = true;
+        }
+    });
+
+    if(updated){
+        let totalProt=0, totalCarb=0, totalFat=0, totalCal=0;
+        plat.ingredients.forEach(i=>{
+            const ratio = i.Quantite/100;
+            totalProt += i.Proteines*ratio;
+            totalCarb += i.Glucides*ratio;
+            totalFat  += i.Lipides*ratio;
+            totalCal  += i.Calories*ratio;
         });
+        plat.totalProt = totalProt;
+        plat.totalCarb = totalCarb;
+        plat.totalFat  = totalFat;
+        plat.totalCal  = totalCal;
+    }
+
+    return plat;
+});
+
         localStorage.setItem(LS_PLATS, JSON.stringify(plats));
 
         renderTable();
@@ -931,6 +938,7 @@ function sauverObj(){
 
 </body>
 </html>
+
 
 
 
