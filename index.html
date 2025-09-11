@@ -2,29 +2,157 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>Gestion des Aliments et Plats</title>
+  <title>Nutrition Tracker</title>
   <style>
-    body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f4f4f4; }
-    header { background: #4CAF50; color: white; padding: 10px; text-align: center; }
-    main { padding: 20px; }
-    h2 { margin-top: 30px; }
-    table { width: 100%; border-collapse: collapse; margin-bottom: 20px; background: white; }
-    th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
-    th { background: #f2f2f2; }
-    .bar { height: 20px; background: #ddd; border-radius: 10px; margin: 5px 0; position: relative; }
-    .bar span { display: block; height: 100%; border-radius: 10px; }
-    .bar .label { position: absolute; width: 100%; text-align: center; top: 0; left: 0; font-size: 12px; line-height: 20px; }
-    .primary { background: #4CAF50; color: white; border: none; padding: 10px; margin: 5px; border-radius: 5px; cursor: pointer; }
-    .danger { background: #f44336; color: white; border: none; padding: 5px 10px; margin: 2px; border-radius: 5px; cursor: pointer; }
-    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); }
-    .modal-content { background: white; margin: 5% auto; padding: 20px; width: 80%; max-height: 80%; overflow-y: auto; border-radius: 10px; }
-    .close { float: right; cursor: pointer; }
+    :root {
+      --bg: #0f172a;
+      --card: #1e293b;
+      --text: #e2e8f0;
+      --primary: #10b981;
+      --secondary: #3b82f6;
+      --danger: #ef4444;
+    }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      background: var(--card);
+      padding: 1rem;
+      text-align: center;
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: var(--primary);
+    }
+    main {
+      padding: 1rem;
+    }
+    h2 {
+      margin-top: 2rem;
+      color: var(--secondary);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--card);
+      border-radius: 12px;
+      overflow: hidden;
+      margin-bottom: 1rem;
+    }
+    th, td {
+      padding: 0.75rem;
+      text-align: center;
+    }
+    th {
+      background: #334155;
+      color: var(--text);
+    }
+    tr:nth-child(even) { background: #1e293b; }
+    tr:nth-child(odd) { background: #111827; }
+    input, select {
+      padding: 0.5rem;
+      border-radius: 8px;
+      border: 1px solid #334155;
+      background: #0f172a;
+      color: var(--text);
+    }
+    button {
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      font-weight: bold;
+      transition: all 0.2s ease;
+    }
+    button.primary { background: var(--primary); color: white; }
+    button.primary:hover { background: #16a34a; transform: translateY(-2px); }
+    button.danger { background: var(--danger); color: white; }
+    button.danger:hover { background: #b91c1c; transform: translateY(-2px); }
+    .bar {
+      height: 20px;
+      background: #334155;
+      border-radius: 10px;
+      margin: 0.5rem 0;
+      position: relative;
+      overflow: hidden;
+    }
+    .bar span {
+      display: block;
+      height: 100%;
+      border-radius: 10px;
+    }
+    .bar .label {
+      position: absolute;
+      width: 100%;
+      text-align: center;
+      top: 0;
+      left: 0;
+      font-size: 12px;
+      line-height: 20px;
+    }
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.7);
+      justify-content: center;
+      align-items: center;
+    }
+    .modal-content {
+      background: var(--card);
+      padding: 20px;
+      border-radius: 18px;
+      max-height: 80%;
+      overflow-y: auto;
+      width: 90%;
+      max-width: 600px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.35);
+    }
+    .close {
+      float: right;
+      cursor: pointer;
+      font-size: 1.5rem;
+      color: var(--danger);
+    }
+    .stat {
+      background: linear-gradient(145deg, #0b1220, #111827);
+      border-radius: 18px;
+      border: 1px solid #1f2937;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.35);
+      padding: 1rem;
+      text-align: center;
+      margin: 0.5rem;
+      flex: 1;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .stat:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 12px 28px rgba(0,0,0,0.45);
+    }
+    #totaux {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-around;
+      margin-top: 1rem;
+    }
+    @media (max-width:640px){
+      tbody tr {
+        display: block;
+        margin-bottom: 1rem;
+        border-radius: 14px;
+        box-shadow: 0 6px 14px rgba(0,0,0,0.3);
+      }
+      td { display: block; text-align: left; }
+      th { display: none; }
+    }
   </style>
 </head>
 <body>
-  <header>
-    <h1>Gestion des Aliments et Plats</h1>
-  </header>
+  <header>Nutrition Tracker</header>
   <main>
     <h2>Aliments</h2>
     <input id="food-search" type="text" placeholder="Rechercher un aliment...">
@@ -34,7 +162,7 @@
     <table id="foods-table">
       <thead>
         <tr>
-          <th>Nom</th><th>Catégorie</th><th>Protéines</th><th>Glucides</th><th>Lipides</th><th>Calories</th><th>Quantité (g)</th><th>Actions</th>
+          <th>Nom</th><th>Catégorie</th><th>Prot</th><th>Gluc</th><th>Lip</th><th>Kcal</th><th>Quantité</th><th>Actions</th>
         </tr>
       </thead>
       <tbody></tbody>
@@ -45,7 +173,7 @@
     <table id="plats-table">
       <thead>
         <tr>
-          <th>Nom</th><th>Ingrédients</th><th>Protéines</th><th>Glucides</th><th>Lipides</th><th>Calories</th><th>Portions</th><th>Actions</th>
+          <th>Nom</th><th>Ingrédients</th><th>Prot</th><th>Gluc</th><th>Lip</th><th>Kcal</th><th>Portions</th><th>Actions</th>
         </tr>
       </thead>
       <tbody></tbody>
@@ -70,28 +198,24 @@
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
-    // --- Données locales ---
-    const LS_FOODS = "cm_foods_custom_v5";
-    const LS_PLATS = "cm_plats_v3";
-    const LS_QTY = "cm_quantities_v5";
-
-    function getFoods(){ return JSON.parse(localStorage.getItem(LS_FOODS)) || []; }
-    function getPlats(){ return JSON.parse(localStorage.getItem(LS_PLATS)) || []; }
-    function saveFoods(v){ localStorage.setItem(LS_FOODS, JSON.stringify(v)); }
-    function savePlats(v){ localStorage.setItem(LS_PLATS, JSON.stringify(v)); }
-    function getQuantities(){ return JSON.parse(localStorage.getItem(LS_QTY)) || {}; }
-    function saveQuantities(v){ localStorage.setItem(LS_QTY, JSON.stringify(v)); }
+    // --- Gestion des données ---
+    const LS_FOODS="cm_foods_custom_v5", LS_PLATS="cm_plats_v3", LS_QTY="cm_quantities_v5";
+    const getFoods=()=>JSON.parse(localStorage.getItem(LS_FOODS))||[];
+    const getPlats=()=>JSON.parse(localStorage.getItem(LS_PLATS))||[];
+    const saveFoods=v=>localStorage.setItem(LS_FOODS,JSON.stringify(v));
+    const savePlats=v=>localStorage.setItem(LS_PLATS,JSON.stringify(v));
+    const getQuantities=()=>JSON.parse(localStorage.getItem(LS_QTY))||{};
+    const saveQuantities=v=>localStorage.setItem(LS_QTY,JSON.stringify(v));
 
     // --- Affichage aliments ---
     function renderFoods(){
-      const foods = getFoods();
-      const qmap = getQuantities();
-      const tbody = document.querySelector("#foods-table tbody");
-      tbody.innerHTML = "";
+      const foods=getFoods(),qmap=getQuantities();
+      const tbody=document.querySelector("#foods-table tbody");
+      tbody.innerHTML="";
       foods.forEach((f,index)=>{
-        const qty = qmap[f.Nom] || 0;
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
+        const qty=qmap[f.Nom]||0;
+        const tr=document.createElement("tr");
+        tr.innerHTML=`
           <td>${f.Nom}</td>
           <td>${f.Categorie||""}</td>
           <td>${f.Proteines}</td>
@@ -103,124 +227,97 @@
         tbody.appendChild(tr);
       });
       document.querySelectorAll(".qty-inp").forEach(inp=>{
-        inp.oninput = ()=>{
-          const q = getQuantities();
-          q[inp.dataset.name] = parseFloat(inp.value)||0;
-          saveQuantities(q);
-          computeTotals();
+        inp.oninput=()=>{
+          const q=getQuantities();
+          q[inp.dataset.name]=parseFloat(inp.value)||0;
+          saveQuantities(q); computeTotals();
         };
       });
     }
-
     function supprimerAliment(nom){
-      let foods = getFoods().filter(f=>f.Nom!==nom);
-      saveFoods(foods);
-      renderFoods(); computeTotals();
+      let foods=getFoods().filter(f=>f.Nom!==nom);
+      saveFoods(foods); renderFoods(); computeTotals();
     }
 
     // --- Gestion plats ---
-    let currentPlatIndex = null;
-    let checkedMap = {};
-    let allIngredients = [];
-
+    let currentPlatIndex=null,checkedMap={},allIngredients=[];
     function ouvrirPlatModal(index=null){
-      currentPlatIndex = index;
-      const nomInput = document.getElementById("p-nom");
-      const foods = getFoods();
-      allIngredients = foods.map(f=>({...f}));
-      checkedMap = {};
-
-      if(index !== null){
-        const plat = getPlats()[index];
-        nomInput.value = plat.Nom;
-        plat.ingredients.forEach(i => { checkedMap[i.Nom] = i.Quantite; });
-      } else {
-        nomInput.value = "";
-      }
+      currentPlatIndex=index;
+      const nomInput=document.getElementById("p-nom");
+      const foods=getFoods();
+      allIngredients=foods.map(f=>({...f}));
+      checkedMap={};
+      if(index!==null){
+        const plat=getPlats()[index];
+        nomInput.value=plat.Nom;
+        plat.ingredients.forEach(i=>{checkedMap[i.Nom]=i.Quantite;});
+      }else{nomInput.value="";}
       renderIngredientsList();
-      document.getElementById("modal-plat").style.display = "block";
+      document.getElementById("modal-plat").style.display="flex";
     }
-
-    function fermerPlatModal(){
-      document.getElementById("modal-plat").style.display = "none";
-    }
-
+    function fermerPlatModal(){document.getElementById("modal-plat").style.display="none";}
     function renderIngredientsList(){
-      const div = document.getElementById("ingredients-list");
-      div.innerHTML = "";
+      const div=document.getElementById("ingredients-list");
+      div.innerHTML="";
       allIngredients.forEach((f,idx)=>{
-        const row = document.createElement("div");
-        row.className = "row";
-        const checked = checkedMap[f.Nom] ? "checked" : "";
-        const val = checkedMap[f.Nom] || "";
-        row.innerHTML = `
+        const row=document.createElement("div");
+        row.className="row";
+        const checked=checkedMap[f.Nom]?"checked":"";
+        const val=checkedMap[f.Nom]||"";
+        row.innerHTML=`
           <label><input type="checkbox" data-index="${idx}" ${checked}> ${f.Nom} (${f.Categorie||""})</label>
           <input type="number" min="0" step="1" value="${val}" style="width:80px"> g
         `;
         div.appendChild(row);
       });
       div.querySelectorAll("input[type=checkbox]").forEach(cb=>{
-        cb.onchange = ()=>{
-          const nom = allIngredients[parseInt(cb.dataset.index)].Nom;
-          if(cb.checked){
-            checkedMap[nom] = 100;
-            renderIngredientsList();
-          } else {
-            delete checkedMap[nom];
-            renderIngredientsList();
-          }
+        cb.onchange=()=>{
+          const nom=allIngredients[parseInt(cb.dataset.index)].Nom;
+          if(cb.checked){checkedMap[nom]=100; renderIngredientsList();}
+          else{delete checkedMap[nom]; renderIngredientsList();}
         };
       });
       div.querySelectorAll("input[type=number]").forEach((inp,i)=>{
-        inp.oninput = ()=>{
-          const nom = allIngredients[i].Nom;
-          if(checkedMap[nom]!==undefined){
-            checkedMap[nom] = parseFloat(inp.value)||0;
-          }
+        inp.oninput=()=>{
+          const nom=allIngredients[i].Nom;
+          if(checkedMap[nom]!==undefined){checkedMap[nom]=parseFloat(inp.value)||0;}
         };
       });
     }
-
-    document.getElementById("btn-save-plat").onclick = ()=>{
-      const nom = document.getElementById("p-nom").value.trim();
-      if(!nom){ alert("Aucun nom renseigné"); return; }
-      const ingredients = [];
+    document.getElementById("btn-save-plat").onclick=()=>{
+      const nom=document.getElementById("p-nom").value.trim();
+      if(!nom){alert("Aucun nom renseigné");return;}
+      const ingredients=[];
       for(const nomIng in checkedMap){
-        const ing = allIngredients.find(f=>f.Nom===nomIng);
+        const ing=allIngredients.find(f=>f.Nom===nomIng);
         if(ing){
-          const qty = checkedMap[nomIng];
-          const ratio = qty/100;
+          const qty=checkedMap[nomIng],ratio=qty/100;
           ingredients.push({
-            Nom: ing.Nom,
-            Quantite: qty,
-            Proteines: ing.Proteines*ratio,
-            Glucides: ing.Glucides*ratio,
-            Lipides: ing.Lipides*ratio,
-            Calories: ing.Calories*ratio
+            Nom:ing.Nom,Quantite:qty,
+            Proteines:ing.Proteines*ratio,
+            Glucides:ing.Glucides*ratio,
+            Lipides:ing.Lipides*ratio,
+            Calories:ing.Calories*ratio
           });
         }
       }
-      const totalProt = ingredients.reduce((s,i)=>s+i.Proteines,0);
-      const totalCarb = ingredients.reduce((s,i)=>s+i.Glucides,0);
-      const totalFat = ingredients.reduce((s,i)=>s+i.Lipides,0);
-      const totalCal = ingredients.reduce((s,i)=>s+i.Calories,0);
-      const newPlat = {Nom:nom, ingredients, totalProt,totalCarb,totalFat,totalCal};
-
-      let plats = getPlats();
-      if(currentPlatIndex!==null){ plats[currentPlatIndex] = newPlat; }
+      const totalProt=ingredients.reduce((s,i)=>s+i.Proteines,0);
+      const totalCarb=ingredients.reduce((s,i)=>s+i.Glucides,0);
+      const totalFat=ingredients.reduce((s,i)=>s+i.Lipides,0);
+      const totalCal=ingredients.reduce((s,i)=>s+i.Calories,0);
+      const newPlat={Nom:nom,ingredients,totalProt,totalCarb,totalFat,totalCal};
+      let plats=getPlats();
+      if(currentPlatIndex!==null){plats[currentPlatIndex]=newPlat;}
       else plats.push(newPlat);
-      savePlats(plats);
-      fermerPlatModal(); renderPlats(); computeTotals();
+      savePlats(plats); fermerPlatModal(); renderPlats(); computeTotals();
     };
-
     function renderPlats(){
-      const plats = getPlats();
-      const tbody = document.querySelector("#plats-table tbody");
-      tbody.innerHTML = "";
+      const plats=getPlats(),tbody=document.querySelector("#plats-table tbody");
+      tbody.innerHTML="";
       plats.forEach((p,index)=>{
-        const ingList = p.ingredients.map(i=>`${i.Nom}(${i.Quantite}g)`).join(", ");
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
+        const ingList=p.ingredients.map(i=>`${i.Nom}(${i.Quantite}g)`).join(", ");
+        const tr=document.createElement("tr");
+        tr.innerHTML=`
           <td>${p.Nom}</td>
           <td>${ingList}</td>
           <td>${p.totalProt.toFixed(1)}</td>
@@ -231,72 +328,64 @@
           <td>
             <button onclick="ouvrirPlatModal(${index})">✏️</button>
             <button class="danger" onclick="supprimerPlat(${index})">🗑️</button>
-          </td>
-        `;
+          </td>`;
         tbody.appendChild(tr);
       });
-      document.querySelectorAll(".plat-inp").forEach(inp=>{
-        inp.oninput = computeTotals;
-      });
+      document.querySelectorAll(".plat-inp").forEach(inp=>{inp.oninput=computeTotals;});
     }
-
     function supprimerPlat(i){
-      let plats = getPlats();
-      plats.splice(i,1);
-      savePlats(plats);
-      renderPlats(); computeTotals();
+      let plats=getPlats(); plats.splice(i,1);
+      savePlats(plats); renderPlats(); computeTotals();
     }
 
     // --- Totaux & graphique ---
     let chart;
     function computeTotals(){
-      const qmap = getQuantities();
-      const foods = getFoods();
+      const qmap=getQuantities(),foods=getFoods();
       let p=0,c=0,f=0,k=0;
       foods.forEach(fa=>{
-        const qty = qmap[fa.Nom]||0;
+        const qty=qmap[fa.Nom]||0;
         if(qty>0){
-          const ratio = qty/100;
-          p += fa.Proteines*ratio;
-          c += fa.Glucides*ratio;
-          f += fa.Lipides*ratio;
-          k += fa.Calories*ratio;
+          const ratio=qty/100;
+          p+=fa.Proteines*ratio;
+          c+=fa.Glucides*ratio;
+          f+=fa.Lipides*ratio;
+          k+=fa.Calories*ratio;
         }
       });
-      const plats = getPlats();
+      const plats=getPlats();
       document.querySelectorAll(".plat-inp").forEach(inp=>{
-        const qty = parseFloat(inp.value)||0;
-        const idx = parseInt(inp.dataset.index);
+        const qty=parseFloat(inp.value)||0,idx=parseInt(inp.dataset.index);
         if(qty>0 && plats[idx]){
-          const plat = plats[idx];
-          p += plat.totalProt*qty;
-          c += plat.totalCarb*qty;
-          f += plat.totalFat*qty;
-          k += plat.totalCal*qty;
+          const plat=plats[idx];
+          p+=plat.totalProt*qty;
+          c+=plat.totalCarb*qty;
+          f+=plat.totalFat*qty;
+          k+=plat.totalCal*qty;
         }
       });
-      const div = document.getElementById("totaux");
-      div.innerHTML = `
-        <div class="bar"><span style="width:${Math.min(p/160*100,100)}%;background:#4CAF50"></span><div class="label">Prot: ${p.toFixed(1)} / 160g</div></div>
-        <div class="bar"><span style="width:${Math.min(c/220*100,100)}%;background:#2196F3"></span><div class="label">Glucides: ${c.toFixed(1)} / 220g</div></div>
-        <div class="bar"><span style="width:${Math.min(f/60*100,100)}%;background:#FF9800"></span><div class="label">Lipides: ${f.toFixed(1)} / 60g</div></div>
-        <div class="bar"><span style="width:${Math.min(k/2200*100,100)}%;background:#9C27B0"></span><div class="label">Calories: ${k.toFixed(0)} / 2200</div></div>
-      `;
-      if(chart){ chart.destroy(); }
-      const ctx = document.getElementById("chart").getContext("2d");
-      chart = new Chart(ctx,{
+      const div=document.getElementById("totaux");
+      div.innerHTML=`
+        <div class="stat">Prot: ${p.toFixed(1)} / 160g</div>
+        <div class="stat">Glucides: ${c.toFixed(1)} / 220g</div>
+        <div class="stat">Lipides: ${f.toFixed(1)} / 60g</div>
+        <div class="stat">Calories: ${k.toFixed(0)} / 2200</div>`;
+      if(chart){chart.destroy();}
+      const ctx=document.getElementById("chart").getContext("2d");
+      chart=new Chart(ctx,{
         type:"pie",
         data:{
           labels:["Protéines","Glucides","Lipides"],
-          datasets:[{data:[p*4,c*4,f*9],backgroundColor:["#4CAF50","#2196F3","#FF9800"]}]
+          datasets:[{data:[p*4,c*4,f*9],backgroundColor:["#10b981","#3b82f6","#f59e0b"]}]
+        },
+        options:{
+          plugins:{legend:{labels:{color:"#e5e7eb"}}}
         }
       });
     }
 
     // --- Init ---
-    renderFoods();
-    renderPlats();
-    computeTotals();
+    renderFoods(); renderPlats(); computeTotals();
   </script>
 </body>
 </html>
