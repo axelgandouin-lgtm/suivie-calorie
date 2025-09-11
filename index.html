@@ -1,4 +1,4 @@
-reprend celui de ce fichier : <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8" />
@@ -410,65 +410,114 @@ let objectifs = getObj();
     // --- Supprimer / Modifier aliments ---
    function modifierAliment(index) {
     const foods = getFoods();
-    if(index<0||index>=foods.length) return;
+    if (index < 0 || index >= foods.length) return;
     const aliment = foods[index];
-    const newNom = prompt("Nom de l’aliment :", aliment.Nom);
-    if(!newNom) return;
-    const prot = parseFloat(prompt("Protéines /100g :", aliment.Proteines));
-    const carb = parseFloat(prompt("Glucides /100g :", aliment.Glucides));
-    const fat  = parseFloat(prompt("Lipides /100g :", aliment.Lipides));
-    const cal  = parseFloat(prompt("Calories /100g :", aliment.Calories));
-    if([prot,carb,fat,cal].some(v => Number.isNaN(v))) return;
-    const cat = prompt("Catégorie (prot, carb, fat) :", aliment.Categorie || "prot"); 
 
-    const defaultLen = defaultAliments.length;
-    if(index >= defaultLen){
-        // custom
-        const custom = JSON.parse(localStorage.getItem(LS_CUSTOM)||'[]');
-        custom[index - defaultLen] = { Nom:newNom, Proteines:prot, Glucides:carb, Lipides:fat, Calories:cal, Categorie:cat };
-        localStorage.setItem(LS_CUSTOM, JSON.stringify(custom));
-    } else {
-        // override
-        const override = JSON.parse(localStorage.getItem('cm_aliments_override_v1')||'{}');
-        override[aliment.Nom] = { Nom:newNom, Proteines:prot, Glucides:carb, Lipides:fat, Calories:cal, Categorie:cat };
-        localStorage.setItem('cm_aliments_override_v1', JSON.stringify(override));
-    }
+    // Créer la modal
+    const modal = document.createElement("div");
+    modal.style.position = "fixed";
+    modal.style.top = 0;
+    modal.style.left = 0;
+    modal.style.width = "100%";
+    modal.style.height = "100%";
+    modal.style.backgroundColor = "rgba(0,0,0,0.5)";
+    modal.style.display = "flex";
+    modal.style.alignItems = "center";
+    modal.style.justifyContent = "center";
+    modal.style.zIndex = 9999;
 
-    // Mettre à jour les plats
-    const plats = getPlats().map(plat => {
-        let updated = false;
-        plat.ingredients.forEach(ing => {
-            if(ing.Nom === aliment.Nom){
-                ing.Nom = newNom;
-                ing.Proteines = prot;
-                ing.Glucides  = carb;
-                ing.Lipides   = fat;
-                ing.Calories  = cal;
-                updated = true;
-            }
-        });
-        if(updated){
-            let totalProt=0, totalCarb=0, totalFat=0, totalCal=0;
-            plat.ingredients.forEach(i=>{
-                const ratio = i.Quantite/100;
-                totalProt += i.Proteines*ratio;
-                totalCarb += i.Glucides*ratio;
-                totalFat  += i.Lipides*ratio;
-                totalCal  += i.Calories*ratio;
-            });
-            plat.totalProt = totalProt;
-            plat.totalCarb = totalCarb;
-            plat.totalFat  = totalFat;
-            plat.totalCal  = totalCal;
+    modal.innerHTML = `
+        <div style="background:white; padding:20px; border-radius:10px; max-width:400px; width:100%;">
+            <h3>Modifier l'aliment</h3>
+            <label>Nom: <input type="text" id="edit-nom" value="${aliment.Nom}"></label><br><br>
+            <label>Protéines /100g: <input type="number" id="edit-prot" value="${aliment.Proteines}" step="0.1"></label><br><br>
+            <label>Glucides /100g: <input type="number" id="edit-carb" value="${aliment.Glucides}" step="0.1"></label><br><br>
+            <label>Lipides /100g: <input type="number" id="edit-fat" value="${aliment.Lipides}" step="0.1"></label><br><br>
+            <label>Calories /100g: <input type="number" id="edit-cal" value="${aliment.Calories}" step="1"></label><br><br>
+            <label>Catégorie:
+                <select id="edit-cat">
+                    <option value="prot" ${aliment.Categorie === 'prot' ? 'selected' : ''}>Protéine</option>
+                    <option value="carb" ${aliment.Categorie === 'carb' ? 'selected' : ''}>Glucide</option>
+                    <option value="fat"  ${aliment.Categorie === 'fat' ? 'selected' : ''}>Lipide</option>
+                </select>
+            </label><br><br>
+            <button id="save-aliment">Sauvegarder</button>
+            <button id="cancel-aliment">Annuler</button>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    // Annuler
+    modal.querySelector("#cancel-aliment").onclick = () => {
+        document.body.removeChild(modal);
+    };
+
+    // Sauvegarder
+    modal.querySelector("#save-aliment").onclick = () => {
+        const newNom = modal.querySelector("#edit-nom").value.trim();
+        const prot   = parseFloat(modal.querySelector("#edit-prot").value);
+        const carb   = parseFloat(modal.querySelector("#edit-carb").value);
+        const fat    = parseFloat(modal.querySelector("#edit-fat").value);
+        const cal    = parseFloat(modal.querySelector("#edit-cal").value);
+        const cat    = modal.querySelector("#edit-cat").value;
+
+        if (!newNom || [prot, carb, fat, cal].some(v => Number.isNaN(v))) {
+            alert("Veuillez remplir tous les champs correctement.");
+            return;
         }
-        return plat;
-    });
-    localStorage.setItem(LS_PLATS, JSON.stringify(plats));
 
-    renderTable();
-    renderPlats();
-    computeTotals();
+        // Mettre à jour l'aliment
+        const defaultLen = defaultAliments.length;
+        if (index >= defaultLen) {
+            const custom = JSON.parse(localStorage.getItem(LS_CUSTOM) || '[]');
+            custom[index - defaultLen] = { Nom: newNom, Proteines: prot, Glucides: carb, Lipides: fat, Calories: cal, Categorie: cat };
+            localStorage.setItem(LS_CUSTOM, JSON.stringify(custom));
+        } else {
+            const override = JSON.parse(localStorage.getItem('cm_aliments_override_v1') || '{}');
+            override[aliment.Nom] = { Nom: newNom, Proteines: prot, Glucides: carb, Lipides: fat, Calories: cal, Categorie: cat };
+            localStorage.setItem('cm_aliments_override_v1', JSON.stringify(override));
+        }
+
+        // Mettre à jour les plats
+        const plats = getPlats().map(plat => {
+            let updated = false;
+            plat.ingredients.forEach(ing => {
+                if (ing.Nom === aliment.Nom) {
+                    ing.Nom = newNom;
+                    ing.Proteines = prot;
+                    ing.Glucides = carb;
+                    ing.Lipides = fat;
+                    ing.Calories = cal;
+                    updated = true;
+                }
+            });
+            if (updated) {
+                let totalProt=0, totalCarb=0, totalFat=0, totalCal=0;
+                plat.ingredients.forEach(i => {
+                    const ratio = i.Quantite/100;
+                    totalProt += i.Proteines*ratio;
+                    totalCarb += i.Glucides*ratio;
+                    totalFat  += i.Lipides*ratio;
+                    totalCal  += i.Calories*ratio;
+                });
+                plat.totalProt = totalProt;
+                plat.totalCarb = totalCarb;
+                plat.totalFat  = totalFat;
+                plat.totalCal  = totalCal;
+            }
+            return plat;
+        });
+        localStorage.setItem(LS_PLATS, JSON.stringify(plats));
+
+        renderTable();
+        renderPlats();
+        computeTotals();
+
+        document.body.removeChild(modal);
+    };
 }
+
 
 
 
@@ -882,6 +931,7 @@ function sauverObj(){
 
 </body>
 </html>
+
 
 
 
