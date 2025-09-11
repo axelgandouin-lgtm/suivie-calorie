@@ -427,7 +427,7 @@ let objectifs = getObj();
     modal.style.zIndex = 9999;
 
     modal.innerHTML = `
-        <div style="background:black; padding:20px; border-radius:10px; max-width:400px; width:100%;">
+        <div style="background:var(--card); padding:20px; border-radius:10px; max-width:400px; width:100%;">
             <h3>Modifier l'aliment</h3>
             <label>Nom: <input type="text" id="edit-nom" value="${aliment.Nom}"></label><br><br>
             <label>Protéines /100g: <input type="number" id="edit-prot" value="${aliment.Proteines}" step="0.1"></label><br><br>
@@ -931,6 +931,7 @@ function sauverObj(){
 
 </body>
 </html>
+
 
 
 
