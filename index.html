@@ -413,25 +413,28 @@ let objectifs = getObj();
     if(index<0||index>=foods.length) return;
     const aliment = foods[index];
     const newNom = prompt("Nom de l’aliment :", aliment.Nom);
-    if(!newNom) return;  // si annule, on sort
+    if(!newNom) return;
     const prot = parseFloat(prompt("Protéines /100g :", aliment.Proteines));
     const carb = parseFloat(prompt("Glucides /100g :", aliment.Glucides));
     const fat  = parseFloat(prompt("Lipides /100g :", aliment.Lipides));
     const cal  = parseFloat(prompt("Calories /100g :", aliment.Calories));
     if([prot,carb,fat,cal].some(v => Number.isNaN(v))) return;
-    const cat = prompt("Catégorie (prot, carb, fat) :", aliment.Categorie || "prot"); // ✅ récupération type
-
+    const cat = prompt("Catégorie (prot, carb, fat) :", aliment.Categorie || "prot"); 
 
     const defaultLen = defaultAliments.length;
-    if(index>=defaultLen){
+    if(index >= defaultLen){
         // custom
-        const custom[index-defaultLen] = { Nom:newNom, Proteines:prot, Glucides:carb, Lipides:fat, Calories:cal, Categorie:cat };
+        const custom = JSON.parse(localStorage.getItem(LS_CUSTOM)||'[]');
+        custom[index - defaultLen] = { Nom:newNom, Proteines:prot, Glucides:carb, Lipides:fat, Calories:cal, Categorie:cat };
+        localStorage.setItem(LS_CUSTOM, JSON.stringify(custom));
     } else {
         // override
+        const override = JSON.parse(localStorage.getItem('cm_aliments_override_v1')||'{}');
         override[aliment.Nom] = { Nom:newNom, Proteines:prot, Glucides:carb, Lipides:fat, Calories:cal, Categorie:cat };
+        localStorage.setItem('cm_aliments_override_v1', JSON.stringify(override));
     }
 
-    // ✅ Mettre à jour les plats qui contiennent cet aliment
+    // Mettre à jour les plats
     const plats = getPlats().map(plat => {
         let updated = false;
         plat.ingredients.forEach(ing => {
@@ -466,6 +469,7 @@ let objectifs = getObj();
     renderPlats();
     computeTotals();
 }
+
 
 
     function supprimerAliment(index){
@@ -878,5 +882,6 @@ function sauverObj(){
 
 </body>
 </html>
+
 
 
