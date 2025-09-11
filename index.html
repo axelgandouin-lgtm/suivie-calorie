@@ -419,18 +419,16 @@ let objectifs = getObj();
     const fat  = parseFloat(prompt("Lipides /100g :", aliment.Lipides));
     const cal  = parseFloat(prompt("Calories /100g :", aliment.Calories));
     if([prot,carb,fat,cal].some(v => Number.isNaN(v))) return;
+    const cat = prompt("Catégorie (prot, carb, fat) :", aliment.Categorie || "prot"); // ✅ récupération type
+
 
     const defaultLen = defaultAliments.length;
     if(index>=defaultLen){
         // custom
-        const custom = JSON.parse(localStorage.getItem(LS_CUSTOM)||'[]');
-        custom[index-defaultLen] = { Nom:newNom, Proteines:prot, Glucides:carb, Lipides:fat, Calories:cal, Categorie: (custom[index-defaultLen] && custom[index-defaultLen].Categorie) ? custom[index-defaultLen].Categorie : "prot" };
-        localStorage.setItem(LS_CUSTOM, JSON.stringify(custom));
+        const custom[index-defaultLen] = { Nom:newNom, Proteines:prot, Glucides:carb, Lipides:fat, Calories:cal, Categorie:cat };
     } else {
         // override
-        const override = JSON.parse(localStorage.getItem('cm_aliments_override_v1')||'{}');
-        override[aliment.Nom] = { Nom:newNom, Proteines:prot, Glucides:carb, Lipides:fat, Calories:cal, Categorie: "prot" };
-        localStorage.setItem('cm_aliments_override_v1', JSON.stringify(override));
+        override[aliment.Nom] = { Nom:newNom, Proteines:prot, Glucides:carb, Lipides:fat, Calories:cal, Categorie:cat };
     }
 
     // ✅ Mettre à jour les plats qui contiennent cet aliment
@@ -880,4 +878,5 @@ function sauverObj(){
 
 </body>
 </html>
+
 
