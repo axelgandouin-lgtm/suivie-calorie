@@ -632,42 +632,6 @@ function modifierPlat(index){
 });
 
 
-    document.getElementById("btn-save-plat").addEventListener("click",()=>{
-        const nom=document.getElementById("p-nom").value.trim();
-        if(!nom){alert("Nom du plat requis"); return;}
-        const checkboxes=document.querySelectorAll("#ingredients-list input[type=checkbox]");
-        let ingredients=[];
-        checkboxes.forEach(cb=>{
-            if(cb.checked){
-                const index = parseInt(cb.dataset.index);
-                const qtyInput = document.querySelector(`#ingredients-list input[type=number][data-index='${index}']`);
-                const qty = parseFloat(qtyInput.value) || 0;
-                if(qty > 0){
-                    const f = getFoods()[index];
-                    ingredients.push({Nom: f.Nom, Proteines: f.Proteines, Glucides: f.Glucides, Lipides: f.Lipides, Calories: f.Calories, Quantite: qty});
-                }
-            }
-        });
-
-        // Calcul totaux plat
-        let totalProt=0, totalCarb=0, totalFat=0, totalCal=0;
-        ingredients.forEach(i=>{
-            const ratio = i.Quantite/100;
-            totalProt += i.Proteines*ratio;
-            totalCarb += i.Glucides*ratio;
-            totalFat += i.Lipides*ratio;
-            totalCal += i.Calories*ratio;
-        });
-
-        let plats = getPlats();
-        plats.push({Nom: nom, ingredients: ingredients, totalProt, totalCarb, totalFat, totalCal});
-        savePlats(plats);
-        document.getElementById('modal-plat').style.display='none';
-        document.getElementById("p-nom").value="";
-        renderPlats();
-        computeTotals();
-    });
-
     // ----- BARRE et TOTALS -----
     function majBarre(id, valeur, objectif) {
         const bar = document.getElementById(id);
@@ -1002,6 +966,7 @@ function sauverObj(){
 
 </body>
 </html>
+
 
 
 
