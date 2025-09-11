@@ -246,9 +246,7 @@ reprend celui de ce fichier : <!DOCTYPE html>
     </div>
 
 <script>
-    let allIngredients = [];
-let currentPlatIndex = null;
-let checkedMap = {}; // <-- stock global pour la modal
+
 
     // --- Données ---
     
@@ -396,7 +394,7 @@ let objectifs = getObj();
           <input class="plat-inp" type="number" min="0" step="1" value="0" data-index="${index}">
       </td>
       <td data-label="Actions">
-          <button onclick="modifierPlat(${index})">✏️</button>
+           <button onclick="ouvrirPlatModal(${index})">✏️</button>
           <button onclick="supprimerPlat(${index})">❌</button>
       </td>
     `;
@@ -504,76 +502,6 @@ let objectifs = getObj();
 }
 
 
-    // Ouvrir modal pour modifier
-function modifierPlat(index){
-    const plats = getPlats();
-    const plat = plats[index];
-    document.getElementById("modal-plat").style.display="block";
-    document.getElementById("p-nom").value = plat.Nom;
-    document.getElementById("modal-plat").dataset.editIndex = index; // <-- stock index
-
-    const list=document.getElementById("ingredients-list");
-    list.innerHTML="";
-    getFoods().forEach((i,idx)=>{
-        const existing = plat.ingredients.find(ing => ing.Nom===i.Nom);
-        const checked = existing ? "checked" : "";
-        const qtyVal = existing ? existing.Quantite : "";
-        const div=document.createElement("div");
-        div.className="row";
-        div.innerHTML=`<input type="checkbox" data-index="${idx}" ${checked}/> ${i.Nom}
-<input type="number" placeholder="g" style="width:60px" data-index="${idx}" value="${qtyVal}">`;
-        list.appendChild(div);
-    });
-}
-
-
-        // Quand on clique sur "Valider"
-       document.getElementById("btn-save-plat").addEventListener("click",()=>{
-    const nom=document.getElementById("p-nom").value.trim();
-    if(!nom){alert("Nom du plat requis"); return;}
-
-    const checkboxes=document.querySelectorAll("#ingredients-list input[type=checkbox]");
-    let ingredients=[];
-    checkboxes.forEach(cb=>{
-        if(cb.checked){
-            const idx = parseInt(cb.dataset.index);
-            const qtyInput = document.querySelector(`#ingredients-list input[type=number][data-index='${idx}']`);
-            const qty = parseFloat(qtyInput.value) || 0;
-            if(qty > 0){
-                const f = getFoods()[idx];
-                ingredients.push({Nom: f.Nom, Proteines: f.Proteines, Glucides: f.Glucides, Lipides: f.Lipides, Calories: f.Calories, Quantite: qty});
-            }
-        }
-    });
-
-    let totalProt=0, totalCarb=0, totalFat=0, totalCal=0;
-    ingredients.forEach(i=>{
-        const ratio = i.Quantite/100;
-        totalProt += i.Proteines*ratio;
-        totalCarb += i.Glucides*ratio;
-        totalFat  += i.Lipides*ratio;
-        totalCal  += i.Calories*ratio;
-    });
-
-    let plats = getPlats();
-    const editIndex = document.getElementById("modal-plat").dataset.editIndex;
-    if(editIndex !== undefined && editIndex !== ""){
-        // Modifier plat existant
-        plats[editIndex] = {Nom: nom, ingredients, totalProt, totalCarb, totalFat, totalCal};
-    } else {
-        // Nouveau plat
-        plats.push({Nom: nom, ingredients, totalProt, totalCarb, totalFat, totalCal});
-    }
-
-    localStorage.setItem(LS_PLATS, JSON.stringify(plats));
-    document.getElementById('modal-plat').style.display='none';
-    document.getElementById("p-nom").value="";
-    delete document.getElementById("modal-plat").dataset.editIndex;
-
-    renderPlats();
-    computeTotals();
-});
-
 
     function supprimerPlat(index){
         if(!confirm("Supprimer ce plat ?")) return;
@@ -615,21 +543,7 @@ function modifierPlat(index){
     });
 
     // --- Ajouter Plat (nouveau) ---
-    document.getElementById("btn-add-plat").addEventListener("click",()=>{
-    allIngredients = getFoods().map(f => ({...f})); // <-- ajouter
-    currentPlatIndex = null; // nouveau plat
-    document.getElementById("p-nom").value = "";
-
-    const list=document.getElementById("ingredients-list");
-    list.innerHTML="";
-    renderIngredientsList({}); // aucun ingrédient coché pour le moment
-
-    // Réinitialiser recherche et filtre
-    document.getElementById("ing-search").value="";
-    document.getElementById("ing-filter").value="";
-
-    document.getElementById("modal-plat").style.display="block";
-});
+   document.getElementById("btn-add-plat").addEventListener("click", () => ouvrirPlatModal());
 
 
     // ----- BARRE et TOTALS -----
@@ -966,3 +880,4 @@ function sauverObj(){
 
 </body>
 </html>
+
