@@ -467,6 +467,13 @@ let objectifs = getObj();
             return;
         }
 
+        // 🔹 Vérification doublon
+        if (newNom.toLowerCase() !== aliment.Nom.toLowerCase() &&
+            getFoods().some(f => f.Nom.toLowerCase() === newNom.toLowerCase())) {
+            alert("Un aliment avec ce nom existe déjà !");
+            return;
+        }
+
         // Mettre à jour l'aliment
         const defaultLen = defaultAliments.length;
         if (index >= defaultLen) {
@@ -481,39 +488,36 @@ let objectifs = getObj();
 
         // Mettre à jour les plats
         const plats = getPlats().map(plat => {
-    let updated = false;
-    plat.ingredients.forEach(ing => {
-        if(ing.Nom === aliment.Nom){
-            // conserver la quantité existante
-            const qty = ing.Quantite;
+            let updated = false;
+            plat.ingredients.forEach(ing => {
+                if(ing.Nom === aliment.Nom){
+                    const qty = ing.Quantite; // conserver quantité existante
+                    ing.Nom = newNom;
+                    ing.Proteines = prot;
+                    ing.Glucides  = carb;
+                    ing.Lipides   = fat;
+                    ing.Calories  = cal;
+                    ing.Quantite  = qty;
+                    updated = true;
+                }
+            });
 
-            ing.Nom = newNom;
-            ing.Proteines = prot;
-            ing.Glucides  = carb;
-            ing.Lipides   = fat;
-            ing.Calories  = cal;
-            ing.Quantite  = qty; // <-- conserve la quantité
-            updated = true;
-        }
-    });
-
-    if(updated){
-        let totalProt=0, totalCarb=0, totalFat=0, totalCal=0;
-        plat.ingredients.forEach(i=>{
-            const ratio = i.Quantite/100;
-            totalProt += i.Proteines*ratio;
-            totalCarb += i.Glucides*ratio;
-            totalFat  += i.Lipides*ratio;
-            totalCal  += i.Calories*ratio;
+            if(updated){
+                let totalProt=0, totalCarb=0, totalFat=0, totalCal=0;
+                plat.ingredients.forEach(i=>{
+                    const ratio = i.Quantite/100;
+                    totalProt += i.Proteines*ratio;
+                    totalCarb += i.Glucides*ratio;
+                    totalFat  += i.Lipides*ratio;
+                    totalCal  += i.Calories*ratio;
+                });
+                plat.totalProt = totalProt;
+                plat.totalCarb = totalCarb;
+                plat.totalFat  = totalFat;
+                plat.totalCal  = totalCal;
+            }
+            return plat;
         });
-        plat.totalProt = totalProt;
-        plat.totalCarb = totalCarb;
-        plat.totalFat  = totalFat;
-        plat.totalCal  = totalCal;
-    }
-
-    return plat;
-});
 
         localStorage.setItem(LS_PLATS, JSON.stringify(plats));
 
@@ -571,27 +575,34 @@ let objectifs = getObj();
 
     // --- Ajouter Aliment ---
     document.getElementById("btn-add").addEventListener("click",()=>{
-        const nom=document.getElementById("f-nom").value.trim();
-        const prot=parseFloat(document.getElementById("f-prot").value);
-        const carb=parseFloat(document.getElementById("f-carb").value);
-        const fat=parseFloat(document.getElementById("f-fat").value);
-        const kcal=parseFloat(document.getElementById("f-kcal").value);
-        const cat=document.getElementById("f-cat").value || "prot"; // Nouvelle catégorie
+    const nom = document.getElementById("f-nom").value.trim();
+    const prot = parseFloat(document.getElementById("f-prot").value);
+    const carb = parseFloat(document.getElementById("f-carb").value);
+    const fat  = parseFloat(document.getElementById("f-fat").value);
+    const kcal = parseFloat(document.getElementById("f-kcal").value);
+    const cat  = document.getElementById("f-cat").value || "prot";
 
-        if(!nom||[prot,carb,fat,kcal].some(v=>isNaN(v))){
-            alert("Complète tous les champs");
-            return;
-        }
+    if(!nom || [prot, carb, fat, kcal].some(v => isNaN(v))){
+        alert("Complète tous les champs");
+        return;
+    }
 
-        const custom=JSON.parse(localStorage.getItem(LS_CUSTOM)||"[]");
-        custom.push({Nom:nom,Proteines:prot,Glucides:carb,Lipides:fat,Calories:kcal,Categorie:cat});
-        localStorage.setItem(LS_CUSTOM,JSON.stringify(custom));
+    const foods = getFoods();
+    if(foods.some(f => f.Nom.toLowerCase() === nom.toLowerCase())){
+        alert("Un aliment avec ce nom existe déjà !");
+        return;
+    }
 
-        ["f-nom","f-prot","f-carb","f-fat","f-kcal"].forEach(id=>document.getElementById(id).value="");
-        document.getElementById("f-cat").value="prot"; // reset la liste
+    const custom = JSON.parse(localStorage.getItem(LS_CUSTOM)||"[]");
+    custom.push({Nom:nom,Proteines:prot,Glucides:carb,Lipides:fat,Calories:kcal,Categorie:cat});
+    localStorage.setItem(LS_CUSTOM,JSON.stringify(custom));
 
-        renderTable();
-    });
+    ["f-nom","f-prot","f-carb","f-fat","f-kcal"].forEach(id=>document.getElementById(id).value="");
+    document.getElementById("f-cat").value="prot";
+
+    renderTable();
+});
+
 
     document.getElementById("btn-clear-custom").addEventListener("click",()=>{
         if(confirm("Supprimer tous tes aliments personnalisés ?")){
@@ -938,6 +949,7 @@ function sauverObj(){
 
 </body>
 </html>
+
 
 
 
