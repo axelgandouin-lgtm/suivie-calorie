@@ -526,8 +526,22 @@ let objectifs = getObj();
         localStorage.setItem(LS_PLATS, JSON.stringify(plats));
 
         renderTable();
-        renderPlats();
-        computeTotals();
+        
+       // Avant render
+const platQuantities = {};
+$tbodyPlats.querySelectorAll('.plat-inp').forEach((inp,i)=>{
+    platQuantities[i] = parseFloat(inp.value) || 0;
+});
+
+// Render
+renderPlats();
+
+// Ré-appliquer les quantités
+$tbodyPlats.querySelectorAll('.plat-inp').forEach((inp,i)=>{
+    if(platQuantities[i] !== undefined) inp.value = platQuantities[i];
+});
+computeTotals(); // recalcul des macros
+
         document.body.removeChild(modal);
     };
 }
@@ -535,7 +549,7 @@ let objectifs = getObj();
 
 
 
-    function supprimerAliment(index){
+function supprimerAliment(index){
     const foods = getFoods();
     if(index<0||index>=foods.length) return;
     if(!confirm("Supprimer cet aliment ?")) return;
@@ -549,7 +563,7 @@ let objectifs = getObj();
         custom.splice(index - defaultLen, 1);
         localStorage.setItem(LS_CUSTOM, JSON.stringify(custom));
     } else {
-        // Aliments par défaut : ajouter à deletedDefaults
+        // Aliments par défaut → ajouter à deletedDefaults
         deletedDefaults.push(name);
         localStorage.setItem("deletedDefaults", JSON.stringify(deletedDefaults));
 
@@ -563,7 +577,39 @@ let objectifs = getObj();
     const qmap = getQuantities();
     if(qmap.hasOwnProperty(name)){ delete qmap[name]; saveQuantities(qmap); }
 
+    // --- Supprimer macros de cet aliment dans les plats ---
+    const plats = getPlats().map(plat => {
+        plat.ingredients = plat.ingredients.filter(i => i.Nom !== name);
+        // recalcul des macros
+        let totalProt=0, totalCarb=0, totalFat=0, totalCal=0;
+        plat.ingredients.forEach(i=>{
+            const ratio = i.Quantite/100;
+            totalProt += i.Proteines*ratio;
+            totalCarb += i.Glucides*ratio;
+            totalFat  += i.Lipides*ratio;
+            totalCal  += i.Calories*ratio;
+        });
+        plat.totalProt = totalProt;
+        plat.totalCarb = totalCarb;
+        plat.totalFat  = totalFat;
+        plat.totalCal  = totalCal;
+        return plat;
+    });
+    savePlats(plats);
+
     renderTable();
+     const platQuantities = {};
+    $tbodyPlats.querySelectorAll('.plat-inp').forEach((inp,i)=>{
+        platQuantities[i] = parseFloat(inp.value) || 0;
+    });
+
+    // 2️⃣ Appeler renderPlats()
+    renderPlats();
+
+    // 3️⃣ Ré-appliquer les quantités
+    $tbodyPlats.querySelectorAll('.plat-inp').forEach((inp,i)=>{
+        if(platQuantities[i] !== undefined) inp.value = platQuantities[i];
+    });
 }
 
 
@@ -952,6 +998,7 @@ function sauverObj(){
 
 </body>
 </html>
+
 
 
 
