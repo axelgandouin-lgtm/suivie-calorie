@@ -858,28 +858,33 @@ function ouvrirPlatModal(index = null){
 }
 
 // --- Rendu ingrédients avec recherche & filtre ---
-function renderIngredientsList(){
+function renderIngredientsList() {
     const list = document.getElementById("ingredients-list");
     const searchTerm = document.getElementById("ing-search").value.toLowerCase();
     const catFilter = document.getElementById("ing-filter").value;
 
     // MàJ checkedMap avant rerender
-    document.querySelectorAll("#ingredients-list .row").forEach(row=>{
+    document.querySelectorAll("#ingredients-list .row").forEach(row => {
         const cb = row.querySelector("input[type=checkbox]");
         const qtyInput = row.querySelector("input[type=number]");
-        const nom = allIngredients[parseInt(cb.dataset.index)].Nom;
-        if(cb.checked && qtyInput.value){
-            checkedMap[nom] = parseFloat(qtyInput.value);
+        const idx = parseInt(cb.dataset.index);
+        const f = allIngredients[idx];
+
+        if (!f) return; // ⬅️ sécurisation pour éviter undefined
+
+        if (cb.checked && qtyInput.value) {
+            checkedMap[f.Nom] = parseFloat(qtyInput.value);
         } else {
-            delete checkedMap[nom];
+            delete checkedMap[f.Nom];
         }
     });
 
     list.innerHTML = "";
 
-    allIngredients.forEach((f, idx)=>{
-        if(searchTerm && !f.Nom.toLowerCase().includes(searchTerm)) return;
-        if(catFilter && f.Categorie !== catFilter) return;
+    allIngredients.forEach((f, idx) => {
+        if (!f) return; // ⬅️ ignorer si l’ingrédient est vide
+        if (searchTerm && !f.Nom.toLowerCase().includes(searchTerm)) return;
+        if (catFilter && f.Categorie !== catFilter) return;
 
         const checked = checkedMap[f.Nom] ? "checked" : "";
         const qtyVal = checkedMap[f.Nom] || "";
@@ -894,22 +899,25 @@ function renderIngredientsList(){
 
         const cb = div.querySelector("input[type=checkbox]");
         const qtyInput = div.querySelector("input[type=number]");
-        cb.addEventListener("change", ()=>{
-            if(cb.checked && qtyInput.value){
+
+        cb.addEventListener("change", () => {
+            if (cb.checked && qtyInput.value) {
                 checkedMap[f.Nom] = parseFloat(qtyInput.value);
             } else {
                 delete checkedMap[f.Nom];
             }
         });
-        qtyInput.addEventListener("input", ()=>{
-            if(cb.checked && qtyInput.value){
+
+        qtyInput.addEventListener("input", () => {
+            if (cb.checked && qtyInput.value) {
                 checkedMap[f.Nom] = parseFloat(qtyInput.value);
-            } else if(cb.checked){
+            } else if (cb.checked) {
                 delete checkedMap[f.Nom];
             }
         });
     });
 }
+
 
 // --- Sauvegarde plat ---
 document.getElementById("btn-save-plat").onclick = ()=>{
@@ -998,6 +1006,7 @@ function sauverObj(){
 
 </body>
 </html>
+
 
 
 
