@@ -917,10 +917,15 @@ function renderIngredientsList() {
 // Sauvegarde plat
 document.getElementById("btn-save-plat").onclick = () => {
     const nomInput = document.getElementById("p-nom");
-    if(!nomInput){ alert("Erreur: champ nom introuvable"); return; }
-
+    if (!nomInput) {
+        alert("Erreur: le champ pour le nom du plat est introuvable.");
+        return;
+    }
     const nom = nomInput.value.trim();
-    if(!nom){ alert("Nom du plat requis"); return; }
+    if (!nom) {
+        alert("Le nom du plat est obligatoire.");
+        return;
+    }
 
     const ingredients = [];
     for(let nomIng in checkedMap){
@@ -1007,6 +1012,7 @@ function sauverObj(){
 
 </body>
 </html>
+
 
 
 
