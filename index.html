@@ -184,8 +184,7 @@
 
         <div id="tab-plats" class="tab-content" style="display:none;">
             <div class="row" style="margin-bottom:8px">
-                <input id="p-nom" type="text" placeholder="Nom du plat…" style="flex:1" />
-                <button id="btn-add-plat" class="primary">Ajouter plat</button>
+                <button id="btn-add-plat" class="primary">🍲 Créer un plat</button>
             </div>
             <table id="tbl-plats">
                 <thead>
@@ -227,6 +226,11 @@
             <span class="close" onclick="document.getElementById('modal-plat').style.display='none'">&times;</span>
             <h3>Créer un plat</h3>
             <!-- Barre de recherche et filtre -->
+            <!-- dans #modal-plat .modal-content, après le <h3> -->
+<div style="margin-bottom:8px; display:flex; gap:8px;">
+  <input id="modal-p-nom" type="text" placeholder="Nom du plat…" style="flex:1" />
+</div>
+
 <div style="margin-bottom:8px; display:flex; gap:8px; flex-wrap:wrap;">
   <input id="ing-search" type="text" placeholder="Rechercher un aliment…" style="flex:1"/>
   <select id="ing-filter">
@@ -834,7 +838,7 @@ let checkedMap = {}; // Nom -> Quantité
 // Ouvrir modal plat (création ou modification)
 function ouvrirPlatModal(index = null){
     currentPlatIndex = index;
-    const nomInput = document.getElementById("p-nom");
+    const nomInput = document.getElementById("modal-p-nom");
     const foods = getFoods();
     allIngredients = foods.map(f => ({...f}));
     checkedMap = {};
@@ -916,7 +920,7 @@ function renderIngredientsList() {
 
 // Sauvegarde plat
 document.getElementById("btn-save-plat").onclick = () => {
-    const nomInput = document.getElementById("p-nom");
+    const nomInput = document.getElementById("modal-p-nom");
     if (!nomInput) {
         alert("Erreur: le champ pour le nom du plat est introuvable.");
         return;
@@ -1012,6 +1016,7 @@ function sauverObj(){
 
 </body>
 </html>
+
 
 
 
