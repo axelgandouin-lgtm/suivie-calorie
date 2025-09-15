@@ -259,14 +259,32 @@
 const LS_QTY="cm_quantities_v5";
 const LS_PLATS="cm_plats_v3";
 const defaultAliments = [
-  { Nom:"Poulet (blanc, cuit)", Proteines:31, Glucides:0, Lipides:3.6, Calories:165, Categorie:"prot" },
-  { Nom:"Riz basmati (cuit)", Proteines:2.6, Glucides:28, Lipides:0.3, Calories:130, Categorie:"carb" },
-  { Nom:"Œuf entier", Proteines:12.6, Glucides:1.1, Lipides:9.5, Calories:143, Categorie:"prot" },
-  { Nom:"Fromage blanc 0%", Proteines:8, Glucides:4, Lipides:0.2, Calories:48, Categorie:"prot" },
-  { Nom:"Banane", Proteines:1.1, Glucides:23, Lipides:0.3, Calories:89, Categorie:"carb" },
-  { Nom:"Amandes", Proteines:21, Glucides:22, Lipides:50, Calories:579, Categorie:"fat" },
-  { Nom:"Huile d'olive", Proteines:0, Glucides:0, Lipides:100, Calories:900, Categorie:"fat" }
+  { Nom: "Poulet (blanc, cuit)",          Proteines: 31.0, Glucides: 0.0,  Lipides: 3.6,  Calories: 165, Categorie: "prot" },
+  { Nom: "Riz basmati (cuit)",           Proteines: 2.6,  Glucides: 28.0, Lipides: 0.3,  Calories: 130, Categorie: "carb" },
+  { Nom: "Œuf entier (100 g)",           Proteines: 12.6, Glucides: 1.1,  Lipides: 9.5,  Calories: 143, Categorie: "prot" },
+  { Nom: "Fromage blanc 0%",             Proteines: 8.0,  Glucides: 4.0,  Lipides: 0.2,  Calories: 48,  Categorie: "prot" },
+  { Nom: "Banane",                       Proteines: 1.1,  Glucides: 23.0, Lipides: 0.3,  Calories: 89,  Categorie: "carb" },
+  { Nom: "Amandes",                      Proteines: 21.0, Glucides: 22.0, Lipides: 50.0, Calories: 579, Categorie: "fat" },
+  { Nom: "Huile d'olive",                Proteines: 0.0,  Glucides: 0.0,  Lipides:100.0, Calories: 900, Categorie: "fat" },
+
+  /* Ajouts en respectant prot / carb / fat */
+  { Nom: "Saumon (cuit)",                Proteines: 25.0, Glucides: 0.0,  Lipides: 13.0, Calories: 206, Categorie: "prot" },
+  { Nom: "Bœuf (steak maigre, cuit)",    Proteines: 26.0, Glucides: 0.0,  Lipides: 15.0, Calories: 250, Categorie: "prot" },
+  { Nom: "Pommes",                       Proteines: 0.3,  Glucides: 11.3, Lipides: 0.2,  Calories: 52,  Categorie: "carb" },
+  { Nom: "Brocoli",                      Proteines: 2.8,  Glucides: 6.6,  Lipides: 0.4,  Calories: 34,  Categorie: "carb" },
+  { Nom: "Pomme de terre (cuite à l'eau)",Proteines: 2.0, Glucides:20.1,  Lipides: 0.1,  Calories: 87,  Categorie: "carb" },
+  { Nom: "Lentilles (cuites)",           Proteines: 9.0,  Glucides:20.0,  Lipides: 0.4,  Calories:116,  Categorie: "carb" },
+  { Nom: "Quinoa (cuit)",                Proteines: 4.4,  Glucides:21.3,  Lipides: 1.9,  Calories:120,  Categorie: "carb" },
+  { Nom: "Avocat",                       Proteines: 2.0,  Glucides: 9.0,  Lipides:15.0, Calories:160,  Categorie: "fat" },
+  { Nom: "Yaourt nature (0% MG)",        Proteines: 5.0,  Glucides: 4.7,  Lipides: 0.1,  Calories: 46,  Categorie: "prot" },
+  { Nom: "Miel",                         Proteines: 0.3,  Glucides:82.0,  Lipides: 0.0,  Calories:304,  Categorie: "carb" },
+  { Nom: "Tomate",                       Proteines: 0.9,  Glucides: 3.9,  Lipides: 0.2,  Calories:18,   Categorie: "carb" },
+  { Nom: "Porc (cuisse, cuit)",          Proteines: 27.0, Glucides: 0.0,  Lipides: 14.0, Calories: 242, Categorie: "prot" },
+  { Nom: "Fromage (emmental)",           Proteines: 27.0, Glucides: 1.3,  Lipides: 33.0, Calories: 393, Categorie: "prot" },
+  { Nom: "Pain complet",                 Proteines: 9.0,  Glucides:43.0,  Lipides: 3.5,  Calories:247,  Categorie: "carb" },
+  { Nom: "Pois chiches (cuits)",         Proteines: 8.9,  Glucides:27.4,  Lipides: 2.6,  Calories:164,  Categorie: "carb" }
 ];
+
     let deletedDefaults = JSON.parse(localStorage.getItem("deletedDefaults") || "[]");
 
 
@@ -1016,6 +1034,7 @@ function sauverObj(){
 
 </body>
 </html>
+
 
 
 
